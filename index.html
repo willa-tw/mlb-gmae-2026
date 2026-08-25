@@ -54,6 +54,7 @@
         ::-webkit-scrollbar-thumb { background: #1e3a60; border-radius: 3px; }
         .timer-bar { transition: width 1s linear, background-color 0.5s ease; }
 
+        /* 棒球主題視覺增強效果 */
         .baseball-stitch-top {
             border-top: 3px dashed #bd3039;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
@@ -76,11 +77,23 @@
             transform: translateY(3px);
             box-shadow: 0 2px 0 #0f172a, 0 5px 10px rgba(0,0,0,0.4);
         }
+
+        /* 全畫面球場背景遮罩 (Full Screen Stadium Background) */
+        .stadium-bg-screen {
+            background-image: linear-gradient(to bottom, rgba(4, 13, 24, 0.65), rgba(4, 13, 24, 0.80)), url('bg-stadium.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-<div id="app" class="flex-1 flex flex-col relative">
+<div id="app" class="flex-1 flex flex-col relative min-h-screen">
+
+    <!-- 舞台大螢幕全螢幕滿版球場背景 (Full Viewport Stadium Background) -->
+    <div v-if="currentRoute === 'screen'" class="fixed inset-0 stadium-bg-screen z-0 pointer-events-none"></div>
 
     <!-- 戰術卡宣佈彈出圖卡 (Stage Screen & Mobile Pop-up Modal) -->
     <div v-if="gameState.showCardNotice" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -163,7 +176,7 @@
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col p-3 sm:p-6 max-w-7xl w-full mx-auto">
+    <main class="flex-1 flex flex-col p-3 sm:p-6 max-w-7xl w-full mx-auto relative z-10">
 
         <!-- PAGE 0: 系統門戶 (SYSTEM HUB) -->
         <section v-if="currentRoute === '' || currentRoute === 'hub'" class="flex-1 flex flex-col justify-center items-center py-8">
@@ -232,7 +245,7 @@
         <!-- PAGE 1: 📺 舞台大螢幕獨立頁面 (#screen) -->
         <section v-else-if="currentRoute === 'screen'" class="flex-1 flex flex-col justify-between space-y-6">
             
-            <div class="bg-gradient-to-r from-mlbDark via-slate-900 to-mlbDark border-2 border-slate-700 rounded-3xl p-4 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border">
+            <div class="bg-gradient-to-r from-mlbDark/90 via-slate-900/90 to-mlbDark/90 border-2 border-slate-700 rounded-3xl p-4 sm:p-6 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border backdrop-blur-sm">
                 <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 via-amber-400 to-blue-600"></div>
                 
                 <div class="grid grid-cols-12 gap-4 items-center">
@@ -311,7 +324,7 @@
             </div>
 
             <!-- 主舞台賽事播報面板 -->
-            <div class="bg-mlbCardBg border-2 border-slate-700/80 rounded-3xl p-6 sm:p-8 flex-1 flex flex-col justify-center items-center shadow-2xl min-h-[380px] relative overflow-hidden jumbotron-border">
+            <div class="bg-mlbCardBg/95 border-2 border-slate-700/80 rounded-3xl p-6 sm:p-8 flex-1 flex flex-col justify-center items-center shadow-2xl min-h-[380px] relative overflow-hidden jumbotron-border backdrop-blur-md">
                 
                 <!-- PHASE: LOBBY -->
                 <div v-if="gameState.phase === 'LOBBY'" class="w-full text-center space-y-6">
@@ -537,7 +550,7 @@
             </div>
 
             <!-- Bottom Ticker Bar -->
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between text-xs text-slate-400 shadow-xl">
+            <div class="bg-slate-950/90 border border-slate-800 rounded-2xl px-5 py-3 flex items-center justify-between text-xs text-slate-400 shadow-xl backdrop-blur-sm">
                 <div class="flex items-center gap-2.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
                     <span class="font-bold text-slate-200">賽況播報：</span>
@@ -876,7 +889,7 @@
                         </p>
                     </div>
 
-                    <!-- 類別投票階段 (具備 Grace Period 防壓秒掉單) -->
+                    <!-- 類別投票階段 -->
                     <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
@@ -1013,7 +1026,7 @@
                                 <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
                                 <p class="text-xs text-slate-400">請等待主持人開放作答時間。</p>
                             </div>
-                            <!-- SUCCESS SUBMIT UI (樂觀 UI 鎖定) -->
+                            <!-- SUCCESS SUBMIT UI -->
                             <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-4 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
                                 <div class="text-base font-bold text-emerald-300">答案已成功提交！</div>
@@ -1530,7 +1543,7 @@
                 broadcastState();
             };
 
-            // 出題與倒數 (第 5 題 40 秒，其餘 30 秒)
+            // 出題與倒數
             const startQuestionPhase = () => {
                 gameState.showCardNotice = false;
 
@@ -1661,10 +1674,9 @@
                 }
             };
 
-            // 樂觀 UI 鎖定 (Optimistic Lock) + 雲端單點更新，阻絕 Latency 壓秒問題
+            // 樂觀 UI 鎖定 + 雲端單點更新
             const submitMobileAnswer = (key) => {
                 const tableKey = 'table_' + selectedMobileTable.value;
-                // 本地 UI 0 毫秒即時鎖定
                 gameState.answers[tableKey] = key;
 
                 const updates = {};
@@ -1678,7 +1690,6 @@
                 if (gameState.tableVotes[tableKey]) return; 
 
                 if (window.confirm(`確定要將票投給【${cat}】嗎？\n(確認後本輪無法再更改)`)) {
-                    // 本地 UI 0 毫秒即時鎖定
                     gameState.tableVotes[tableKey] = true;
                     gameState.categoryVotes[cat] = (gameState.categoryVotes[cat] || 0) + 1;
 
@@ -1698,7 +1709,6 @@
                 const cardTitle = cardObj ? cardObj.name : '不使用戰術卡';
 
                 if (window.confirm(`確定要為戰術【${cardTitle}】投下一票嗎？\n(確認後本輪無法再更改)`)) {
-                    // 本地 UI 0 毫秒即時鎖定
                     gameState.tableCardVotes[tableKey] = cardId;
                     gameState.cardVotes[cardId] = (gameState.cardVotes[cardId] || 0) + 1;
 
