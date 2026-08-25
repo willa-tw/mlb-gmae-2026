@@ -270,7 +270,7 @@
                         <div class="my-1">
                             <div class="text-4xl sm:text-6xl font-oswald font-black tracking-widest"
                                  :class="gameState.timer <= 5 ? 'text-red-500 animate-pulse' : 'text-slate-100'">
-                                00:{{ gameState.timer < 10 ? '0' + gameState.timer : gameState.timer }}
+                                00:{{ displayTimerFormatted }}
                             </div>
                         </div>
                         <div class="mt-2">
@@ -305,7 +305,7 @@
 
                 <div class="mt-4 bg-slate-950 h-3.5 rounded-full overflow-hidden border border-slate-800 shadow-inner p-0.5">
                     <div class="h-full timer-bar rounded-full" 
-                         :style="{ width: (gameState.timer / currentMaxTimer * 100) + '%' }"
+                         :style="{ width: (Math.max(0, gameState.timer) / currentMaxTimer * 100) + '%' }"
                          :class="gameState.timer > 5 ? 'bg-emerald-500' : 'bg-red-500'"></div>
                 </div>
             </div>
@@ -650,7 +650,7 @@
                                 <div class="flex gap-2">
                                     <button @click="toggleTimer()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 shadow-md">
                                         <i class="fa-solid" :class="gameState.isTimerRunning ? 'fa-pause' : 'fa-play'"></i>
-                                        {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + gameState.timer + 's)' }}
+                                        {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + Math.max(0, gameState.timer) + 's)' }}
                                     </button>
                                     <button @click="resetTimer()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl">
                                         重置
@@ -876,7 +876,7 @@
                         </p>
                     </div>
 
-                    <!-- 類別投票階段 -->
+                    <!-- 類別投票階段 (具備 Grace Period 防壓秒掉單) -->
                     <div v-else-if="gameState.phase === 'CATEGORY_VOTE'" class="space-y-3">
                         <div v-if="(gameState.activeTeam === 'red' && selectedMobileTable > 10) || (gameState.activeTeam === 'blue' && selectedMobileTable <= 10)" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-shield-halved text-5xl text-slate-600 mb-2"></i>
@@ -890,7 +890,7 @@
                             <h3 class="text-xl font-bold text-white">投票已鎖定</h3>
                             <p class="text-xs text-slate-400">您已完成本輪投票，請等待大螢幕揭曉結果！</p>
                         </div>
-                        <div v-else-if="gameState.timer <= 0" class="py-10 text-center space-y-4">
+                        <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-red-500 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-red-400">投票時間已結束</h3>
                             <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
@@ -899,7 +899,7 @@
                             <div class="text-center mb-2 flex justify-between items-center px-1">
                                 <span class="text-xs text-amber-400 font-bold">請票選本局題目類別</span>
                                 <span class="text-xs font-oswald text-amber-400 font-bold">
-                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ gameState.timer }}s
+                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
                             </div>
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-amber-300/90 text-center bg-amber-950/40 p-2 rounded-xl border border-amber-800/60 mb-3 animate-pulse">
@@ -907,8 +907,8 @@
                             </p>
                             <div v-for="cat in categories" :key="cat" class="w-full mb-3">
                                 <button @click="voteCategory(cat)" 
-                                        :disabled="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer <= 0"
-                                        :class="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer <= 0 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500 sports-btn-3d'"
+                                        :disabled="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1"
+                                        :class="categoryRemaining[cat] === 0 || !gameState.isTimerRunning || gameState.timer < -1 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-slate-900 hover:bg-slate-800 border-slate-700 active:border-amber-500 sports-btn-3d'"
                                         class="w-full py-3.5 border-2 text-white rounded-2xl text-xs font-bold transition flex justify-between items-center px-4 relative overflow-hidden">
                                     <span :class="{ 'line-through text-slate-500': categoryRemaining[cat] === 0 }">
                                         <i class="fa-solid fa-tag mr-2" :class="categoryRemaining[cat] === 0 ? 'text-slate-600' : 'text-amber-400'"></i> {{ cat }}
@@ -939,7 +939,7 @@
                             <h3 class="text-xl font-bold text-white">戰術卡投票已鎖定</h3>
                             <p class="text-xs text-slate-400">您已完成戰術卡小組投票，請等待主持人揭曉！</p>
                         </div>
-                        <div v-else-if="gameState.timer <= 0" class="py-10 text-center space-y-4">
+                        <div v-else-if="gameState.timer < -1" class="py-10 text-center space-y-4">
                             <i class="fa-solid fa-hourglass-end text-5xl text-purple-400 mb-2 animate-bounce"></i>
                             <h3 class="text-xl font-bold text-purple-300">戰術卡投票時間已結束</h3>
                             <p class="text-xs text-slate-400">表單已鎖定，請等待主持人結算！</p>
@@ -948,7 +948,7 @@
                             <div class="text-center mb-1 flex justify-between items-center px-1">
                                 <span class="text-xs text-purple-300 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 請小組票選本輪戰術卡</span>
                                 <span class="text-xs font-oswald text-purple-300 font-bold">
-                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ gameState.timer }}s
+                                    <i class="fa-solid fa-clock mr-1"></i>剩餘 {{ displayTimerFormatted }}s
                                 </span>
                             </div>
                             <p v-if="!gameState.isTimerRunning && gameState.timer > 0" class="text-[11px] text-purple-300/90 text-center bg-purple-950/40 p-2 rounded-xl border border-purple-800/60 mb-2 animate-pulse">
@@ -956,16 +956,16 @@
                             </p>
                             <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="w-full">
                                 <button @click="voteCard(card.id)" 
-                                        :disabled="!gameState.isTimerRunning || gameState.timer <= 0"
-                                        :class="!gameState.isTimerRunning || gameState.timer <= 0 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'hover:bg-slate-800 border-purple-500/50 hover:border-purple-400 sports-btn-3d'"
+                                        :disabled="!gameState.isTimerRunning || gameState.timer < -1"
+                                        :class="!gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed border-slate-800' : 'hover:bg-slate-800 border-purple-500/50 hover:border-purple-400 sports-btn-3d'"
                                         class="w-full p-3.5 bg-slate-900 border-2 text-white rounded-2xl text-left transition shadow-md">
                                     <div class="font-bold text-xs text-amber-300 mb-0.5">{{ card.name }}</div>
                                     <div class="text-[10px] text-slate-300 leading-tight">{{ card.desc }}</div>
                                 </button>
                             </div>
                             <button @click="voteCard('none')" 
-                                    :disabled="!gameState.isTimerRunning || gameState.timer <= 0"
-                                    :class="!gameState.isTimerRunning || gameState.timer <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 sports-btn-3d'"
+                                    :disabled="!gameState.isTimerRunning || gameState.timer < -1"
+                                    :class="!gameState.isTimerRunning || gameState.timer < -1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 sports-btn-3d'"
                                     class="w-full py-2.5 bg-slate-900 border-2 border-slate-700 text-slate-400 rounded-2xl text-xs font-bold transition">
                                 不使用戰術卡 (一般攻防)
                             </button>
@@ -998,11 +998,11 @@
 
                             <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-1.5">
                                 <span class="text-slate-300 font-bold flex items-center gap-1"><i class="fa-solid fa-baseball-bat-ball text-amber-400"></i>請討論後按鍵作答：</span>
-                                <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ gameState.timer < 10 ? '0'+gameState.timer : gameState.timer }}</span>
+                                <span class="text-amber-400 font-bold font-oswald text-sm">剩餘: 00:{{ displayTimerFormatted }}</span>
                             </div>
                             
                             <!-- HARD TIMEOUT LOCK UI -->
-                            <div v-if="gameState.timer <= 0" class="py-6 text-center space-y-2">
+                            <div v-if="gameState.timer < -1" class="py-6 text-center space-y-2">
                                 <i class="fa-solid fa-hourglass-end text-4xl text-red-500 mb-1 animate-bounce"></i>
                                 <h3 class="text-lg font-bold text-red-400">作答時間已結束</h3>
                                 <p class="text-xs text-slate-400">表單已鎖定，請等待大螢幕揭曉結果！</p>
@@ -1013,7 +1013,7 @@
                                 <h3 class="text-lg font-bold text-amber-400">作答已暫停</h3>
                                 <p class="text-xs text-slate-400">請等待主持人開放作答時間。</p>
                             </div>
-                            <!-- SUCCESS SUBMIT UI -->
+                            <!-- SUCCESS SUBMIT UI (樂觀 UI 鎖定) -->
                             <div v-else-if="gameState.answers['table_' + selectedMobileTable]" class="bg-emerald-950/80 border-2 border-emerald-500/60 p-4 rounded-2xl text-center space-y-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                                 <i class="fa-solid fa-circle-check text-3xl text-emerald-400"></i>
                                 <div class="text-base font-bold text-emerald-300">答案已成功提交！</div>
@@ -1131,7 +1131,7 @@
                 sessionStorage.removeItem('mlb_admin_auth');
             };
 
-            // 10 題新版題庫 (編號第 5 題為 40 秒題)
+            // 題庫列表 (10 題)
             const questions = ref([
                 { 
                     id: 1, 
@@ -1253,7 +1253,13 @@
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
             const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
 
-            // 計算當前階段最大倒數秒數 (第 5 題為 40 秒，其餘 30 秒或 15 秒)
+            // 格式化顯示時間（自動防護負數顯示，如 -1s 仍呈現 00:00）
+            const displayTimerFormatted = computed(() => {
+                const validT = Math.max(0, gameState.timer);
+                return validT < 10 ? '0' + validT : validT;
+            });
+
+            // 計算當前階段最大倒數秒數
             const currentMaxTimer = computed(() => {
                 if (gameState.phase === 'QUESTION') {
                     return (currentQuestion.value && currentQuestion.value.id === 5) ? 40 : 30;
@@ -1273,7 +1279,6 @@
                 return gameState.activeTeam === 'red' ? [1,2,3,4,5,6,7,8,9,10] : [11,12,13,14,15,16,17,18,19,20];
             });
 
-            // 更新新題庫分類剩餘題目數 (2, 3, 2, 3)
             const categoryRemaining = computed(() => {
                 const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合題': 3 };
                 if (!gameState.usedQuestionIds) return counts;
@@ -1359,7 +1364,6 @@
                 const newConnected = [...gameState.connectedTables, tableNum];
                 localStorage.setItem('my_locked_table', tableNum); 
                 
-                // 精密更新，避免干擾倒數計時
                 const updates = {};
                 updates['mlb_live_game_state/connectedTables'] = newConnected;
                 updates['mlb_live_game_state/systemMessage'] = `${tableFormatted} 桌已成功鎖定代表身份！`;
@@ -1379,7 +1383,7 @@
                 broadcastState();
             };
 
-            // 控制切換階段 (類別與戰術卡預設暫停 15 秒，需手動點擊按鈕開啟倒數)
+            // 控制切換階段
             const setPhase = (phase) => {
                 gameState.phase = phase;
                 stopTimer();
@@ -1526,7 +1530,7 @@
                 broadcastState();
             };
 
-            // 控台「出題與倒數」按下後，直接出題並自動啟動倒數 (第 5 題為 40 秒，其餘 30 秒)
+            // 出題與倒數 (第 5 題 40 秒，其餘 30 秒)
             const startQuestionPhase = () => {
                 gameState.showCardNotice = false;
 
@@ -1536,7 +1540,7 @@
                 }
 
                 if (!gameState.activeCards[gameState.activeTeam]) {
-                    confirmCardVote(false); // 避免出題時彈出卡片宣告圖卡
+                    confirmCardVote(false);
                 }
                 
                 const targetCat = gameState.selectedCategory;
@@ -1559,11 +1563,9 @@
                 
                 gameState.usedQuestionIds.push(selectedQ.id);
 
-                // 核心修改：判斷是否為編號第 5 題，是的話為 40 秒，其餘為 30 秒
                 const questionTimer = selectedQ.id === 5 ? 40 : 30;
                 gameState.timer = questionTimer;
                 
-                // 自動啟動倒數
                 startTimer();
                 systemMessage.value = `【${targetCat}】第 ${currentRoundNumber.value} 題開放！作答倒數 ${questionTimer} 秒中...`;
                 broadcastState();
@@ -1577,11 +1579,12 @@
                 }
             };
 
+            // 壓秒防護的核心倒數計時器 (允許多延遲 1 秒做 Grace Period)
             const startTimer = () => {
                 stopTimer();
                 gameState.isTimerRunning = true;
                 timerInterval = setInterval(() => {
-                    if (gameState.timer > 0) {
+                    if (gameState.timer > -1) {
                         gameState.timer--;
                         broadcastState();
                     } else {
@@ -1658,9 +1661,12 @@
                 }
             };
 
-            // 精密更新，避免手機端干擾倒數計時
+            // 樂觀 UI 鎖定 (Optimistic Lock) + 雲端單點更新，阻絕 Latency 壓秒問題
             const submitMobileAnswer = (key) => {
                 const tableKey = 'table_' + selectedMobileTable.value;
+                // 本地 UI 0 毫秒即時鎖定
+                gameState.answers[tableKey] = key;
+
                 const updates = {};
                 updates['mlb_live_game_state/answers/' + tableKey] = key;
                 updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌代表成功提交答案 [${key}]！`;
@@ -1672,8 +1678,12 @@
                 if (gameState.tableVotes[tableKey]) return; 
 
                 if (window.confirm(`確定要將票投給【${cat}】嗎？\n(確認後本輪無法再更改)`)) {
+                    // 本地 UI 0 毫秒即時鎖定
+                    gameState.tableVotes[tableKey] = true;
+                    gameState.categoryVotes[cat] = (gameState.categoryVotes[cat] || 0) + 1;
+
                     const updates = {};
-                    updates['mlb_live_game_state/categoryVotes/' + cat] = (gameState.categoryVotes[cat] || 0) + 1;
+                    updates['mlb_live_game_state/categoryVotes/' + cat] = gameState.categoryVotes[cat];
                     updates['mlb_live_game_state/tableVotes/' + tableKey] = true;
                     updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌已成功將票投給【${cat}】！`;
                     db.ref().update(updates);
@@ -1688,8 +1698,12 @@
                 const cardTitle = cardObj ? cardObj.name : '不使用戰術卡';
 
                 if (window.confirm(`確定要為戰術【${cardTitle}】投下一票嗎？\n(確認後本輪無法再更改)`)) {
+                    // 本地 UI 0 毫秒即時鎖定
+                    gameState.tableCardVotes[tableKey] = cardId;
+                    gameState.cardVotes[cardId] = (gameState.cardVotes[cardId] || 0) + 1;
+
                     const updates = {};
-                    updates['mlb_live_game_state/cardVotes/' + cardId] = (gameState.cardVotes[cardId] || 0) + 1;
+                    updates['mlb_live_game_state/cardVotes/' + cardId] = gameState.cardVotes[cardId];
                     updates['mlb_live_game_state/tableCardVotes/' + tableKey] = cardId;
                     updates['mlb_live_game_state/systemMessage'] = `#0${selectedMobileTable.value} 桌為戰術【${cardTitle}】投下一票！`;
                     db.ref().update(updates);
@@ -1868,6 +1882,7 @@
                 categoryRemaining,
                 currentRoundNumber,
                 currentMaxTimer,
+                displayTimerFormatted,
                 getActiveTeamAvailableCards,
                 openNewWindow,
                 lockTable,
