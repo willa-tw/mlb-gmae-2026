@@ -78,9 +78,9 @@
             box-shadow: 0 2px 0 #0f172a, 0 5px 10px rgba(0,0,0,0.4);
         }
 
-        /* 全畫面球場背景遮罩 (Full Screen Stadium Background) */
+        /* 全畫面球場背景遮罩（已調弱遮罩濃度，背景更清晰） */
         .stadium-bg-screen {
-            background-image: linear-gradient(to bottom, rgba(4, 13, 24, 0.65), rgba(4, 13, 24, 0.80)), url('bg-stadium.jpg');
+            background-image: linear-gradient(to bottom, rgba(4, 13, 24, 0.30), rgba(4, 13, 24, 0.50)), url('bg-stadium.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -1266,7 +1266,7 @@
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
             const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
 
-            // 格式化顯示時間（自動防護負數顯示，如 -1s 仍呈現 00:00）
+            // 格式化顯示時間
             const displayTimerFormatted = computed(() => {
                 const validT = Math.max(0, gameState.timer);
                 return validT < 10 ? '0' + validT : validT;
@@ -1592,7 +1592,7 @@
                 }
             };
 
-            // 壓秒防護的核心倒數計時器 (允許多延遲 1 秒做 Grace Period)
+            // 壓秒防護的核心倒數計時器
             const startTimer = () => {
                 stopTimer();
                 gameState.isTimerRunning = true;
