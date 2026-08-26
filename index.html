@@ -78,9 +78,9 @@
             box-shadow: 0 2px 0 #0f172a, 0 5px 10px rgba(0,0,0,0.4);
         }
 
-        /* 全畫面球場背景遮罩（已調弱遮罩濃度，背景更清晰） */
+        /* 全畫面球場背景（已移除深色遮罩，呈現圖片原本色彩） */
         .stadium-bg-screen {
-            background-image: linear-gradient(to bottom, rgba(4, 13, 24, 0.30), rgba(4, 13, 24, 0.50)), url('bg-stadium.jpg');
+            background-image: url('bg-stadium.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -1211,11 +1211,10 @@
                 { 
                     id: 8, 
                     category: '綜合題', 
-                    question: `【是非題】以下情況是否為真實發生事件？
-2025 年季後賽，一名水手球迷穿著「DUMP HERE 61」的衣服求 Cal Raleigh 把球轟過來。結果成真後，他當場換上「DUMP HERE 62」的另一件衣服！`, 
-                    options: { O: '正確 (True)', X: '錯誤 (False)' }, 
-                    answer: 'O', 
-                    explanation: '事件為真！發生在 2025 年 ALDS 水手對老虎，球迷真的準備了下一件衣服，Raleigh 看到也笑了，後來還送給他簽名球棒' 
+                    question: '台灣好手李灝宇近期效力於底特律老虎隊。球隊官方社群在今年的「球員週」期間，以綽號公布了每日先發名單。\n請問球隊為球風強悍且拚勁十足的李灝宇冠上了什麼霸氣外號？', 
+                    options: { A: '怪力男', B: '比特犬', C: '戰神', D: 'Gangster' }, 
+                    answer: 'B', 
+                    explanation: '李灝宇在老虎官方的球員週先發名單中，以中文「比特犬」亮相，和隊友清一色的英文綽號相比相當醒目。' 
                 },
                 { 
                     id: 9, 
