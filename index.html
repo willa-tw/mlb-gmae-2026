@@ -131,7 +131,7 @@
                 <i class="fa-solid fa-check-double"></i> 控台關閉通知
             </button>
             <div v-else class="text-xs text-amber-400/90 font-bold animate-pulse pt-2">
-                <i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 請等候主持人控台推進下一階段...
+                <i class="fa-solid fa-spinner fa-spin mr-1.5"></i> 請等候下一階段...
             </div>
         </div>
     </div>
@@ -1210,7 +1210,7 @@
                 },
                 { 
                     id: 8, 
-                    category: '綜合題', 
+                    category: '綜合時事', 
                     question: '台灣好手李灝宇近期效力於底特律老虎隊。球隊官方社群在今年的「球員週」期間，以綽號公布了每日先發名單。\n請問球隊為球風強悍且拚勁十足的李灝宇冠上了什麼霸氣外號？', 
                     options: { A: '怪力男', B: '比特犬', C: '戰神', D: 'Gangster' }, 
                     answer: 'B', 
@@ -1218,7 +1218,7 @@
                 },
                 { 
                     id: 9, 
-                    category: '綜合題', 
+                    category: '綜合時事', 
                     question: '近年道奇球員開轟回到休息區時，常看到隊友朝全壘打打者臉上灑什麼？', 
                     options: { A: '爆米花', B: '葵花籽', C: '水', D: '彩帶' }, 
                     answer: 'B', 
@@ -1226,7 +1226,7 @@
                 },
                 { 
                     id: 10, 
-                    category: '綜合題', 
+                    category: '綜合時事', 
                     question: '【是非題】現在到 T-Mobile Park，在球場外「無法」看到鈴木一朗的雕像', 
                     options: { O: '是 (無法看到)', X: '否 (可以看到)' }, 
                     answer: 'X', 
@@ -1234,7 +1234,7 @@
                 }
             ]);
 
-            const categories = ['歷史紀錄', '現役球星', '戰術規則', '綜合題'];
+            const categories = ['歷史紀錄', '現役球星', '戰術規則', '綜合時事'];
 
             const gameState = reactive({
                 phase: 'LOBBY',
@@ -1251,7 +1251,7 @@
                 timer: 30,
                 isTimerRunning: false, 
                 activeCards: { red: null, blue: null },
-                categoryVotes: { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合題': 0 },
+                categoryVotes: { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 },
                 cardVotes: { none: 0 }, 
                 tableCardVotes: {},      
                 tableVotes: {}, 
@@ -1292,7 +1292,7 @@
             });
 
             const categoryRemaining = computed(() => {
-                const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合題': 3 };
+                const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合時事': 3 };
                 if (!gameState.usedQuestionIds) return counts;
                 gameState.usedQuestionIds.forEach(id => {
                     const q = questions.value.find(q => q.id === id);
@@ -1318,7 +1318,7 @@
                         if (!data.tableVotes) data.tableVotes = {};
                         if (!data.tableCardVotes) data.tableCardVotes = {};
                         if (!data.cardVotes) data.cardVotes = { none: 0 };
-                        if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合題': 0 };
+                        if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
                         if (!data.activeCards) data.activeCards = { red: null, blue: null };
                         if (data.isScored === undefined) data.isScored = false;
                         if (data.showCardNotice === undefined) data.showCardNotice = false;
