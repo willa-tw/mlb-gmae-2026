@@ -176,8 +176,8 @@
         </div>
     </header>
 
-    <!-- 舞台畫面模式時解除 max-w-7xl 限制，將區域全寬度擴展 (Full Width Layout) -->
-    <main class="flex-1 flex flex-col p-3 sm:p-6 w-full mx-auto relative z-10" :class="currentRoute === 'screen' ? 'max-w-none px-4 sm:px-10 lg:px-16' : 'max-w-7xl'">
+    <!-- 舞台畫面模式與控台模式時解除 max-w-7xl 限制，將區域全寬度擴展 (Full Width Layout) -->
+    <main class="flex-1 flex flex-col p-3 sm:p-6 w-full mx-auto relative z-10" :class="(currentRoute === 'screen' || currentRoute === 'admin') ? 'max-w-none px-4 sm:px-10 lg:px-12' : 'max-w-7xl'">
 
         <!-- PAGE 0: 系統門戶 (SYSTEM HUB) -->
         <section v-if="currentRoute === '' || currentRoute === 'hub'" class="flex-1 flex flex-col justify-center items-center py-8">
@@ -243,30 +243,30 @@
         </section>
 
 
-        <!-- PAGE 1: 📺 舞台大螢幕獨立頁面 (#screen - 投影機特化大字階與滿版介面) -->
+        <!-- PAGE 1: 📺 舞台大螢幕獨立頁面 (#screen - 藍隊在左，紅隊在右) -->
         <section v-else-if="currentRoute === 'screen'" class="flex-1 flex flex-col justify-between space-y-6">
             
             <!-- 上方記分板區塊 (電子大螢幕面板) -->
             <div class="bg-gradient-to-r from-mlbDark/90 via-slate-900/90 to-mlbDark/90 border-2 border-slate-700 rounded-3xl p-5 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden jumbotron-border backdrop-blur-sm">
-                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 via-amber-400 to-blue-600"></div>
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-amber-400 to-red-600"></div>
                 
                 <div class="grid grid-cols-12 gap-6 items-center">
                     
-                    <!-- Red Team (Tables 1-10) -->
-                    <div class="col-span-4 bg-gradient-to-b from-red-950/80 to-slate-950 border-2 border-red-500/50 rounded-2xl p-4 sm:p-6 text-center relative overflow-hidden shadow-inner">
-                        <div class="absolute -right-6 -bottom-6 text-red-500/10 text-9xl font-black font-oswald select-none">RED</div>
+                    <!-- Blue Team (Tables 11-20) - 擺放於左邊 -->
+                    <div class="col-span-4 bg-gradient-to-b from-blue-950/80 to-slate-950 border-2 border-blue-500/50 rounded-2xl p-4 sm:p-6 text-center relative overflow-hidden shadow-inner">
+                        <div class="absolute -left-6 -bottom-6 text-blue-500/10 text-9xl font-black font-oswald select-none">BLUE</div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm sm:text-lg font-black text-red-400 tracking-wider flex items-center gap-1.5">
-                                <i class="fa-solid fa-baseball text-red-500"></i> RED TEAM (#01~#10)
+                            <span class="text-sm sm:text-lg font-black text-blue-400 tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-baseball text-blue-500"></i> BLUE TEAM (#11~#20)
                             </span>
-                            <span class="text-xs sm:text-sm bg-red-900/80 text-red-200 border border-red-700 px-3 py-1 rounded-full font-bold">100人 (10桌)</span>
+                            <span class="text-xs sm:text-sm bg-blue-900/80 text-blue-200 border border-blue-700 px-3 py-1 rounded-full font-bold">100人 (10桌)</span>
                         </div>
-                        <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black text-red-300 my-1 tracking-tight score-glow-red">
-                            {{ gameState.scores.red }} <span class="text-lg sm:text-2xl text-slate-400 font-normal">分</span>
+                        <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black text-blue-300 my-1 tracking-tight score-glow-blue">
+                            {{ gameState.scores.blue }} <span class="text-lg sm:text-2xl text-slate-400 font-normal">分</span>
                         </div>
                         <div class="flex justify-center gap-2 mt-3 flex-wrap">
-                            <span v-for="card in gameState.redCards" :key="card.id" 
-                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-red-600 text-white shadow-md border-red-400'"
+                            <span v-for="card in gameState.blueCards" :key="card.id" 
+                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-blue-600 text-white shadow-md border-blue-400'"
                                   class="text-xs sm:text-sm px-3 py-1 rounded-lg font-bold border">
                                 {{ card.name ? card.name.split(' ')[0] : '' }}
                             </span>
@@ -296,21 +296,21 @@
                         </div>
                     </div>
 
-                    <!-- Blue Team (Tables 11-20) -->
-                    <div class="col-span-4 bg-gradient-to-b from-blue-950/80 to-slate-950 border-2 border-blue-500/50 rounded-2xl p-4 sm:p-6 text-center relative overflow-hidden shadow-inner">
-                        <div class="absolute -left-6 -bottom-6 text-blue-500/10 text-9xl font-black font-oswald select-none">BLUE</div>
+                    <!-- Red Team (Tables 1-10) - 擺放於右邊 -->
+                    <div class="col-span-4 bg-gradient-to-b from-red-950/80 to-slate-950 border-2 border-red-500/50 rounded-2xl p-4 sm:p-6 text-center relative overflow-hidden shadow-inner">
+                        <div class="absolute -right-6 -bottom-6 text-red-500/10 text-9xl font-black font-oswald select-none">RED</div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm sm:text-lg font-black text-blue-400 tracking-wider flex items-center gap-1.5">
-                                <i class="fa-solid fa-baseball text-blue-500"></i> BLUE TEAM (#11~#20)
+                            <span class="text-sm sm:text-lg font-black text-red-400 tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-baseball text-red-500"></i> RED TEAM (#01~#10)
                             </span>
-                            <span class="text-xs sm:text-sm bg-blue-900/80 text-blue-200 border border-blue-700 px-3 py-1 rounded-full font-bold">100人 (10桌)</span>
+                            <span class="text-xs sm:text-sm bg-red-900/80 text-red-200 border border-red-700 px-3 py-1 rounded-full font-bold">100人 (10桌)</span>
                         </div>
-                        <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black text-blue-300 my-1 tracking-tight score-glow-blue">
-                            {{ gameState.scores.blue }} <span class="text-lg sm:text-2xl text-slate-400 font-normal">分</span>
+                        <div class="text-6xl sm:text-8xl lg:text-9xl font-oswald font-black text-red-300 my-1 tracking-tight score-glow-red">
+                            {{ gameState.scores.red }} <span class="text-lg sm:text-2xl text-slate-400 font-normal">分</span>
                         </div>
                         <div class="flex justify-center gap-2 mt-3 flex-wrap">
-                            <span v-for="card in gameState.blueCards" :key="card.id" 
-                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-blue-600 text-white shadow-md border-blue-400'"
+                            <span v-for="card in gameState.redCards" :key="card.id" 
+                                  :class="card.used ? 'bg-slate-900 text-slate-600 line-through border-slate-800' : 'bg-red-600 text-white shadow-md border-red-400'"
                                   class="text-xs sm:text-sm px-3 py-1 rounded-lg font-bold border">
                                 {{ card.name ? card.name.split(' ')[0] : '' }}
                             </span>
@@ -539,14 +539,14 @@
                     
                     <div class="flex justify-center gap-16 mt-10">
                         <div class="text-center p-8 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[280px] shadow-2xl"
-                             :class="{ 'ring-4 ring-red-500 shadow-[0_0_50px_rgba(239,68,68,0.6)] border-red-500': gameState.scores.red > gameState.scores.blue }">
-                            <div class="text-red-400 font-bold text-2xl sm:text-3xl mb-3">紅隊 RED</div>
-                            <div class="text-7xl sm:text-9xl font-oswald font-black text-white score-glow-red">{{ gameState.scores.red }}</div>
-                        </div>
-                        <div class="text-center p-8 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[280px] shadow-2xl"
                              :class="{ 'ring-4 ring-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.6)] border-blue-500': gameState.scores.blue > gameState.scores.red }">
                             <div class="text-blue-400 font-bold text-2xl sm:text-3xl mb-3">藍隊 BLUE</div>
                             <div class="text-7xl sm:text-9xl font-oswald font-black text-white score-glow-blue">{{ gameState.scores.blue }}</div>
+                        </div>
+                        <div class="text-center p-8 bg-slate-950 border-2 border-slate-700 rounded-3xl min-w-[280px] shadow-2xl"
+                             :class="{ 'ring-4 ring-red-500 shadow-[0_0_50px_rgba(239,68,68,0.6)] border-red-500': gameState.scores.red > gameState.scores.blue }">
+                            <div class="text-red-400 font-bold text-2xl sm:text-3xl mb-3">紅隊 RED</div>
+                            <div class="text-7xl sm:text-9xl font-oswald font-black text-white score-glow-red">{{ gameState.scores.red }}</div>
                         </div>
                     </div>
                 </div>
@@ -566,7 +566,7 @@
         </section>
 
 
-        <!-- PAGE 2: 🎛️ 主持人控台獨立頁面 (#admin) -->
+        <!-- PAGE 2: 🎛️ 主持人控台獨立頁面 (#admin - 字體整體放大與邊界展延) -->
         <section v-else-if="currentRoute === 'admin'" class="flex-1 flex flex-col space-y-6">
             
             <div v-if="!isAdminAuthenticated" class="flex-1 flex items-center justify-center py-12">
@@ -576,17 +576,17 @@
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold text-white">主持人控台安全驗證</h2>
-                        <p class="text-xs text-slate-400 mt-1">請輸入管理密碼 (預設: tracypan) 以取得權限。</p>
+                        <p class="text-sm text-slate-300 mt-1">請輸入管理密碼 (預設: tracypan) 以取得權限。</p>
                     </div>
                     <form @submit.prevent="verifyAdminPassword" class="space-y-4">
                         <div>
                             <input v-model="adminPasswordInput" type="password" placeholder="請輸入控台密碼" 
                                    class="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-center text-lg tracking-wider focus:outline-none transition shadow-inner">
-                            <p v-if="adminPasswordError" class="text-xs text-red-400 mt-2 flex items-center justify-center gap-1 font-bold">
+                            <p v-if="adminPasswordError" class="text-sm text-red-400 mt-2 flex items-center justify-center gap-1 font-bold">
                                 <i class="fa-solid fa-triangle-exclamation"></i> 密碼錯誤！請重新輸入。
                             </p>
                         </div>
-                        <button type="submit" class="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <button type="submit" class="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-base">
                             <i class="fa-solid fa-key"></i> 解鎖進入控台
                         </button>
                     </form>
@@ -594,37 +594,37 @@
             </div>
 
             <div v-else class="space-y-6">
-                <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+                <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
                     <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
                         <div>
                             <div class="flex items-center gap-3">
-                                <h2 class="text-2xl font-black text-amber-400 flex items-center gap-2">
+                                <h2 class="text-2xl sm:text-3xl font-black text-amber-400 flex items-center gap-2">
                                     <i class="fa-solid fa-sliders"></i> 主持人控台 (Host Control)
                                 </h2>
-                                <button @click="lockAdmin" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                                <button @click="lockAdmin" class="text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1 font-bold">
                                     <i class="fa-solid fa-lock"></i> 鎖定控台
                                 </button>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">控制流程將即時推播至舞台大螢幕與手機端</p>
+                            <p class="text-sm text-slate-300 mt-1.5 font-medium">控制流程將即時推播至舞台大螢幕與手機端</p>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
-                            <button @click="setPhase('LOBBY')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded-xl text-slate-200 border border-slate-700 font-bold transition shadow">
+                            <button @click="setPhase('LOBBY')" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm rounded-xl text-slate-100 border border-slate-700 font-extrabold transition shadow">
                                 1. 進入大廳
                             </button>
-                            <button @click="setPhase('CATEGORY_VOTE')" class="px-3 py-2 bg-amber-900/60 hover:bg-amber-800 text-xs rounded-xl text-amber-200 border border-amber-700 font-bold transition shadow">
+                            <button @click="setPhase('CATEGORY_VOTE')" class="px-3.5 py-2.5 bg-amber-900/60 hover:bg-amber-800 text-sm rounded-xl text-amber-200 border border-amber-700 font-extrabold transition shadow">
                                 2. 類別投票
                             </button>
-                            <button @click="confirmCategory()" class="px-3 py-2 bg-purple-900/60 hover:bg-purple-800 text-xs rounded-xl text-purple-200 border border-purple-700 font-bold transition shadow">
+                            <button @click="confirmCategory()" class="px-3.5 py-2.5 bg-purple-900/60 hover:bg-purple-800 text-sm rounded-xl text-purple-200 border border-purple-700 font-extrabold transition shadow">
                                 3. 揭曉投票與卡片階段
                             </button>
-                            <button @click="startQuestionPhase()" class="px-3 py-2 bg-emerald-900/60 hover:bg-emerald-800 text-xs rounded-xl text-emerald-200 border border-emerald-700 font-bold transition shadow">
+                            <button @click="startQuestionPhase()" class="px-3.5 py-2.5 bg-emerald-900/60 hover:bg-emerald-800 text-sm rounded-xl text-emerald-200 border border-emerald-700 font-extrabold transition shadow">
                                 4. 出題與倒數
                             </button>
-                            <button @click="revealAnswer()" class="px-3 py-2 bg-blue-900/60 hover:bg-blue-800 text-xs rounded-xl text-blue-200 border border-blue-700 font-bold transition shadow">
+                            <button @click="revealAnswer()" class="px-3.5 py-2.5 bg-blue-900/60 hover:bg-blue-800 text-sm rounded-xl text-blue-200 border border-blue-700 font-extrabold transition shadow">
                                 5. 揭曉正解
                             </button>
-                            <button @click="setPhase('GAME_OVER')" class="px-3 py-2 bg-red-900/60 hover:bg-red-800 text-xs rounded-xl text-red-200 border border-red-700 font-bold transition shadow">
+                            <button @click="setPhase('GAME_OVER')" class="px-3.5 py-2.5 bg-red-900/60 hover:bg-red-800 text-sm rounded-xl text-red-200 border border-red-700 font-extrabold transition shadow">
                                 6. 揭曉勝負
                             </button>
                         </div>
@@ -632,100 +632,100 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Left Column -->
-                        <div class="space-y-4 bg-slate-950 p-4.5 rounded-2xl border border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2 flex items-center justify-between">
-                                <span><i class="fa-solid fa-play text-amber-400 mr-1.5"></i> 核心流程控制器</span>
+                        <div class="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-play text-amber-400 mr-2"></i> 核心流程控制器</span>
                             </h3>
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1.5">當前攻擊隊伍 (Active Team)</label>
-                                <div class="grid grid-cols-2 gap-2">
+                                <label class="text-sm text-slate-300 block mb-2 font-bold">當前攻擊隊伍 (Active Team)</label>
+                                <div class="grid grid-cols-2 gap-2.5">
                                     <button @click="setActiveTeam('red')" 
                                             :class="gameState.activeTeam === 'red' ? 'bg-red-600 text-white font-bold ring-2 ring-red-400' : 'bg-slate-800 text-gray-400'"
-                                            class="py-2 text-xs rounded-xl transition">
+                                            class="py-2.5 text-sm rounded-xl transition font-extrabold">
                                         紅隊 (1~10桌)
                                     </button>
                                     <button @click="setActiveTeam('blue')" 
                                             :class="gameState.activeTeam === 'blue' ? 'bg-blue-600 text-white font-bold ring-2 ring-blue-400' : 'bg-slate-800 text-gray-400'"
-                                            class="py-2 text-xs rounded-xl transition">
+                                            class="py-2.5 text-sm rounded-xl transition font-extrabold">
                                         藍隊 (11~20桌)
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1.5">目前選定類別與題目</label>
-                                <div class="bg-slate-900 border border-slate-700 text-xs rounded-xl p-3 text-white space-y-1">
-                                    <div>類別：<span class="text-amber-400 font-bold">{{ gameState.selectedCategory || '尚未揭曉' }}</span></div>
-                                    <div v-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="text-slate-300 truncate">
+                                <label class="text-sm text-slate-300 block mb-2 font-bold">目前選定類別與題目</label>
+                                <div class="bg-slate-900 border border-slate-700 text-sm rounded-xl p-3.5 text-white space-y-1.5 font-medium">
+                                    <div>類別：<span class="text-amber-400 font-bold text-base">{{ gameState.selectedCategory || '尚未揭曉' }}</span></div>
+                                    <div v-if="gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL'" class="text-slate-200 truncate">
                                         題目：{{ currentQuestion.question }}
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-amber-400 font-bold block mb-1.5 flex items-center justify-between">
-                                    <span><i class="fa-solid fa-stopwatch mr-1"></i> {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : (currentQuestion.id === 5 ? '40 秒答題計時器' : '30 秒答題計時器') }}</span>
+                                <label class="text-sm text-amber-400 font-bold block mb-2 flex items-center justify-between">
+                                    <span><i class="fa-solid fa-stopwatch mr-1.5"></i> {{ (gameState.phase === 'CATEGORY_VOTE' || gameState.phase === 'CARD_PLAY') ? '15 秒投票計時器' : (currentQuestion.id === 5 ? '40 秒答題計時器' : '30 秒答題計時器') }}</span>
                                 </label>
-                                <div class="flex gap-2">
-                                    <button @click="toggleTimer()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 shadow-md">
+                                <div class="flex gap-2.5">
+                                    <button @click="toggleTimer()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm sm:text-base rounded-xl transition flex items-center justify-center gap-1.5 shadow-md">
                                         <i class="fa-solid" :class="gameState.isTimerRunning ? 'fa-pause' : 'fa-play'"></i>
                                         {{ gameState.isTimerRunning ? 'Pause 暫停' : 'Start 啟動倒數 (' + Math.max(0, gameState.timer) + 's)' }}
                                     </button>
-                                    <button @click="resetTimer()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl">
+                                    <button @click="resetTimer()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl">
                                         重置
                                     </button>
                                 </div>
                             </div>
                             <div class="pt-2 border-t border-slate-800">
-                                <button @click="simulateTableAnswers()" class="w-full py-2 bg-purple-900/50 hover:bg-purple-800 text-purple-200 border border-purple-700 text-xs rounded-xl font-bold transition">
-                                    <i class="fa-solid fa-robot mr-1.5"></i> 一鍵模擬當前進攻方答題
+                                <button @click="simulateTableAnswers()" class="w-full py-2.5 bg-purple-900/50 hover:bg-purple-800 text-purple-200 border border-purple-700 text-sm rounded-xl font-bold transition">
+                                    <i class="fa-solid fa-robot mr-2"></i> 一鍵模擬當前進攻方答題
                                 </button>
                             </div>
                         </div>
 
                         <!-- Middle Column -->
-                        <div class="space-y-4 bg-slate-950 p-4.5 rounded-2xl border border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2 flex justify-between items-center">
-                                <span><i class="fa-solid fa-wand-magic-sparkles text-purple-400 mr-1.5"></i> 戰術卡片小組投票</span>
-                                <span class="text-xs px-2 py-0.5 rounded-md font-bold" :class="gameState.activeTeam === 'red' ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'">
+                        <div class="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-200 border-b border-slate-800 pb-2 flex justify-between items-center">
+                                <span><i class="fa-solid fa-wand-magic-sparkles text-purple-400 mr-2"></i> 戰術卡片小組投票</span>
+                                <span class="text-xs sm:text-sm px-2.5 py-0.5 rounded-md font-bold" :class="gameState.activeTeam === 'red' ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'">
                                     {{ gameState.activeTeam === 'red' ? '紅隊進攻' : '藍隊進攻' }}
                                 </span>
                             </h3>
 
-                            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs space-y-1.5">
-                                <div class="text-[10px] text-slate-400 font-bold mb-1">小組投票即時結果：</div>
-                                <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="flex justify-between items-center text-slate-300">
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-sm space-y-2">
+                                <div class="text-xs text-slate-300 font-bold mb-1">小組投票即時結果：</div>
+                                <div v-for="card in getActiveTeamAvailableCards()" :key="card.id" class="flex justify-between items-center text-slate-200 font-medium">
                                     <span>{{ card.name.split(' ')[0] }}</span>
-                                    <span class="font-oswald font-bold text-amber-400">{{ gameState.cardVotes[card.id] || 0 }} 票</span>
+                                    <span class="font-oswald font-bold text-amber-400 text-base">{{ gameState.cardVotes[card.id] || 0 }} 票</span>
                                 </div>
-                                <div class="flex justify-between items-center text-slate-400 border-t border-slate-800/80 pt-1 mt-1">
+                                <div class="flex justify-between items-center text-slate-300 border-t border-slate-800/80 pt-1.5 mt-1.5 font-medium">
                                     <span>不發動卡片</span>
-                                    <span class="font-oswald font-bold text-slate-400">{{ gameState.cardVotes['none'] || 0 }} 票</span>
+                                    <span class="font-oswald font-bold text-slate-400 text-base">{{ gameState.cardVotes['none'] || 0 }} 票</span>
                                 </div>
                             </div>
 
-                            <button @click="confirmCardVote(true)" class="w-full py-2 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-xs rounded-xl font-bold transition flex items-center justify-center gap-1.5">
+                            <button @click="confirmCardVote(true)" class="w-full py-2.5 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-sm rounded-xl font-extrabold transition flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-check-to-slot"></i> 結算卡片投票 (保護優先制)
                             </button>
 
                             <div class="pt-2 border-t border-slate-800">
-                                <div class="text-[10px] text-slate-400 mb-1.5 font-bold">手動覆蓋設定 (備用)：</div>
-                                <div v-if="gameState.activeTeam === 'red'" class="space-y-1">
-                                    <div v-for="card in gameState.redCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-1.5 rounded-lg border border-slate-800 text-xs">
-                                        <span class="font-bold text-slate-300 text-[11px]">{{ card.name.split(' ')[0] }}</span>
+                                <div class="text-xs text-slate-300 mb-2 font-bold">手動覆蓋設定 (備用)：</div>
+                                <div v-if="gameState.activeTeam === 'red'" class="space-y-1.5">
+                                    <div v-for="card in gameState.redCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs sm:text-sm">
+                                        <span class="font-bold text-slate-200">{{ card.name.split(' ')[0] }}</span>
                                         <button @click="useCard('red', card, true)" 
                                                 :disabled="card.used && (!gameState.activeCards.red || gameState.activeCards.red.id !== card.id)"
                                                 :class="(gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-red-600 text-white')"
-                                                class="px-2 py-0.5 rounded text-[10px] font-bold">
+                                                class="px-2.5 py-1 rounded text-xs font-bold">
                                             {{ (gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? '生效中' : (card.used ? '已消耗' : '發動') }}
                                         </button>
                                     </div>
                                 </div>
-                                <div v-else class="space-y-1">
-                                    <div v-for="card in gameState.blueCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-1.5 rounded-lg border border-slate-800 text-xs">
-                                        <span class="font-bold text-slate-300 text-[11px]">{{ card.name.split(' ')[0] }}</span>
+                                <div v-else class="space-y-1.5">
+                                    <div v-for="card in gameState.blueCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs sm:text-sm">
+                                        <span class="font-bold text-slate-200">{{ card.name.split(' ')[0] }}</span>
                                         <button @click="useCard('blue', card, true)" 
                                                 :disabled="card.used && (!gameState.activeCards.blue || gameState.activeCards.blue.id !== card.id)"
                                                 :class="(gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white')"
-                                                class="px-2 py-0.5 rounded text-[10px] font-bold">
+                                                class="px-2.5 py-1 rounded text-xs font-bold">
                                             {{ (gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? '生效中' : (card.used ? '已消耗' : '發動') }}
                                         </button>
                                     </div>
@@ -735,48 +735,48 @@
                             <button @click="cancelCard(gameState.activeTeam)" 
                                     :disabled="!gameState.activeCards[gameState.activeTeam]"
                                     :class="gameState.activeCards[gameState.activeTeam] ? 'bg-amber-900/60 hover:bg-amber-800 text-amber-200 border-amber-600' : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'"
-                                    class="w-full py-1.5 text-xs rounded-xl font-bold transition flex items-center justify-center gap-1.5 border">
+                                    class="w-full py-2 text-xs sm:text-sm rounded-xl font-bold transition flex items-center justify-center gap-1.5 border">
                                 <i class="fa-solid fa-rotate-left"></i> 撤銷卡片 (復原選錯)
                             </button>
                         </div>
 
                         <!-- Right Column -->
-                        <div class="space-y-4 bg-slate-950 p-4.5 rounded-2xl border border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2">
-                                <i class="fa-solid fa-trophy text-amber-400 mr-1.5"></i> 手動比分微調
+                        <div class="space-y-5 bg-slate-950 p-5 sm:p-6 rounded-2xl border border-slate-800">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-200 border-b border-slate-800 pb-2">
+                                <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> 手動比分微調
                             </h3>
-                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                            <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-xs text-red-400 font-bold">紅隊總分</span>
-                                    <span class="text-2xl font-oswald font-black text-red-300">{{ gameState.scores.red }}</span>
+                                    <span class="text-sm text-red-400 font-bold">紅隊總分</span>
+                                    <span class="text-3xl font-oswald font-black text-red-300">{{ gameState.scores.red }}</span>
                                 </div>
-                                <div class="flex gap-1 justify-end flex-wrap">
-                                    <button @click="adjustScore('red', -10)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-10</button>
-                                    <button @click="adjustScore('red', -5)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-5</button>
-                                    <button @click="adjustScore('red', -1)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-1</button>
-                                    <button @click="adjustScore('red', 1)" class="px-2 py-1 bg-red-800 text-white rounded-lg font-bold hover:bg-red-700 text-xs">+1</button>
-                                    <button @click="adjustScore('red', 5)" class="px-2 py-1 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 text-xs">+5</button>
-                                    <button @click="adjustScore('red', 10)" class="px-2 py-1 bg-red-600 text-white rounded-lg font-bold hover:bg-red-500 text-xs">+10</button>
+                                <div class="flex gap-1.5 justify-end flex-wrap">
+                                    <button @click="adjustScore('red', -10)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-10</button>
+                                    <button @click="adjustScore('red', -5)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-5</button>
+                                    <button @click="adjustScore('red', -1)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-1</button>
+                                    <button @click="adjustScore('red', 1)" class="px-2.5 py-1 bg-red-800 text-white rounded-lg font-bold hover:bg-red-700 text-xs sm:text-sm">+1</button>
+                                    <button @click="adjustScore('red', 5)" class="px-2.5 py-1 bg-red-700 text-white rounded-lg font-bold hover:bg-red-600 text-xs sm:text-sm">+5</button>
+                                    <button @click="adjustScore('red', 10)" class="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold hover:bg-red-500 text-xs sm:text-sm">+10</button>
                                 </div>
                             </div>
 
-                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                            <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-xs text-blue-400 font-bold">藍隊總分</span>
-                                    <span class="text-2xl font-oswald font-black text-blue-300">{{ gameState.scores.blue }}</span>
+                                    <span class="text-sm text-blue-400 font-bold">藍隊總分</span>
+                                    <span class="text-3xl font-oswald font-black text-blue-300">{{ gameState.scores.blue }}</span>
                                 </div>
-                                <div class="flex gap-1 justify-end flex-wrap">
-                                    <button @click="adjustScore('blue', -10)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-10</button>
-                                    <button @click="adjustScore('blue', -5)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-5</button>
-                                    <button @click="adjustScore('blue', -1)" class="px-2 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs">-1</button>
-                                    <button @click="adjustScore('blue', 1)" class="px-2 py-1 bg-blue-800 text-white rounded-lg font-bold hover:bg-blue-700 text-xs">+1</button>
-                                    <button @click="adjustScore('blue', 5)" class="px-2 py-1 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 text-xs">+5</button>
-                                    <button @click="adjustScore('blue', 10)" class="px-2 py-1 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500 text-xs">+10</button>
+                                <div class="flex gap-1.5 justify-end flex-wrap">
+                                    <button @click="adjustScore('blue', -10)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-10</button>
+                                    <button @click="adjustScore('blue', -5)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-5</button>
+                                    <button @click="adjustScore('blue', -1)" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-700 text-xs sm:text-sm">-1</button>
+                                    <button @click="adjustScore('blue', 1)" class="px-2.5 py-1 bg-blue-800 text-white rounded-lg font-bold hover:bg-blue-700 text-xs sm:text-sm">+1</button>
+                                    <button @click="adjustScore('blue', 5)" class="px-2.5 py-1 bg-blue-700 text-white rounded-lg font-bold hover:bg-blue-600 text-xs sm:text-sm">+5</button>
+                                    <button @click="adjustScore('blue', 10)" class="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500 text-xs sm:text-sm">+10</button>
                                 </div>
                             </div>
                             <div class="pt-2 border-t border-slate-800">
-                                <button @click="resetEntireGame()" class="w-full py-2 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 text-xs rounded-xl font-bold">
-                                    <i class="fa-solid fa-rotate-left mr-1"></i> 完全重置遊戲紀錄
+                                <button @click="resetEntireGame()" class="w-full py-2.5 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 text-xs sm:text-sm rounded-xl font-bold">
+                                    <i class="fa-solid fa-rotate-left mr-1.5"></i> 完全重置遊戲紀錄
                                 </button>
                             </div>
                         </div>
@@ -784,27 +784,27 @@
                 </div>
 
                 <!-- 20 桌連線狀態與控台一鍵解鎖管理 -->
-                <div class="mt-6 pt-6 border-t border-slate-800 space-y-3">
-                    <h3 class="text-sm font-bold text-slate-300 flex justify-between items-center">
-                        <span><i class="fa-solid fa-users-gear mr-1.5 text-amber-400"></i> 20 桌連線狀態與解鎖管理 (點擊已鎖定桌號可強制解鎖)</span>
-                        <span class="text-xs text-slate-400 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-sm">{{ connectedTablesCount }}</strong> / 20 桌</span>
+                <div class="mt-6 pt-6 border-t border-slate-800 space-y-4">
+                    <h3 class="text-base font-bold text-slate-200 flex justify-between items-center">
+                        <span><i class="fa-solid fa-users-gear mr-2 text-amber-400"></i> 20 桌連線狀態與解鎖管理 (點擊已鎖定桌號可強制解鎖)</span>
+                        <span class="text-sm text-slate-300 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-base">{{ connectedTablesCount }}</strong> / 20 桌</span>
                     </h3>
                     
-                    <div class="grid grid-cols-4 sm:grid-cols-10 gap-2">
+                    <div class="grid grid-cols-4 sm:grid-cols-10 gap-2.5">
                         <div v-for="t in 20" :key="t" 
-                             class="bg-slate-950 p-2 rounded-xl border text-center transition flex flex-col justify-between"
+                             class="bg-slate-950 p-2.5 rounded-xl border text-center transition flex flex-col justify-between"
                              :class="isTableOccupied(t) ? 'border-emerald-500/80 bg-emerald-950/20' : 'border-slate-800'">
-                            <div class="font-oswald font-bold text-xs" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
+                            <div class="font-oswald font-bold text-sm" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
                                 #{{ t < 10 ? '0'+t : t }}
                             </div>
-                            <div class="mt-1.5">
+                            <div class="mt-2">
                                 <button v-if="isTableOccupied(t)" 
                                         @click="unlockSpecificTable(t)"
                                         title="點擊此按鈕強制解鎖此桌，讓玩家重新選桌"
-                                        class="w-full text-[10px] bg-emerald-900/80 hover:bg-red-900 text-emerald-300 hover:text-red-200 border border-emerald-600 hover:border-red-500 px-1 py-1 rounded font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                                        class="w-full text-xs bg-emerald-900/80 hover:bg-red-900 text-emerald-300 hover:text-red-200 border border-emerald-600 hover:border-red-500 px-1 py-1 rounded font-bold transition flex items-center justify-center gap-1 shadow-sm">
                                     <i class="fa-solid fa-lock"></i> 解鎖
                                 </button>
-                                <span v-else class="text-[10px] text-slate-600 block py-1 font-mono">未鎖定</span>
+                                <span v-else class="text-xs text-slate-600 block py-1 font-mono">未鎖定</span>
                             </div>
                         </div>
                     </div>
@@ -812,16 +812,16 @@
 
                 <!-- Live Submissions Table -->
                 <div class="mt-6 pt-6 border-t border-slate-800">
-                    <h3 class="text-sm font-bold text-slate-300 mb-3 flex justify-between items-center">
-                        <span><i class="fa-solid fa-list-numeric mr-1.5 text-amber-400"></i> 進攻方即時作答狀況 (Firebase 同步)</span>
-                        <span class="text-xs text-slate-400 font-normal">綠色 = 已提交答案</span>
+                    <h3 class="text-base font-bold text-slate-200 mb-3 flex justify-between items-center">
+                        <span><i class="fa-solid fa-list-numeric mr-2 text-amber-400"></i> 進攻方即時作答狀況 (Firebase 同步)</span>
+                        <span class="text-xs sm:text-sm text-slate-400 font-normal">綠色 = 已提交答案</span>
                     </h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2">
-                        <div v-for="t in activeTeamTables" :key="t" class="bg-slate-950 p-2 rounded-xl border border-slate-800 text-center text-xs">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2.5">
+                        <div v-for="t in activeTeamTables" :key="t" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center text-xs sm:text-sm">
                             <div class="font-oswald font-bold" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
                                 #{{ t < 10 ? '0'+t : t }}桌
                             </div>
-                            <div class="mt-1 font-bold text-sm" :class="gameState.answers['table_'+t] ? 'text-emerald-400' : 'text-slate-600'">
+                            <div class="mt-1 font-bold text-base" :class="gameState.answers['table_'+t] ? 'text-emerald-400' : 'text-slate-600'">
                                 {{ gameState.answers['table_'+t] || '-' }}
                             </div>
                         </div>
@@ -875,9 +875,6 @@
                                 {{ selectedMobileTable <= 10 ? '紅隊 RED' : '藍隊 BLUE' }}
                             </span>
                         </div>
-                        <span class="text-xs bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-md text-amber-400 font-oswald font-bold">
-                            <i class="fa-solid fa-baseball mr-1"></i>VIP PASS
-                        </span>
                     </div>
                 </div>
 
