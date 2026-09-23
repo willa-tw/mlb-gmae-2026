@@ -49,9 +49,18 @@
             overflow-x: hidden;
         }
         .oswald { font-family: 'Oswald', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #040d18; }
-        ::-webkit-scrollbar-thumb { background: #1e3a60; border-radius: 3px; }
+
+        /* 徹底隱藏 Chrome, Safari, Edge, Firefox 捲軸（保有滾動功能且畫面極致乾淨） */
+        ::-webkit-scrollbar {
+            width: 0px !important;
+            height: 0px !important;
+            display: none !important;
+        }
+        html, body {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
         .timer-bar { transition: width 1s linear, background-color 0.5s ease; }
 
         /* 棒球主題視覺增強效果 */
@@ -576,7 +585,7 @@
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold text-white">主持人控台安全驗證</h2>
-                        <p class="text-sm text-slate-300 mt-1">請輸入管理密碼 (預設: tracypan) 以取得權限。</p>
+                        <p class="text-sm text-slate-400 mt-1">請輸入管理密碼 (預設: tracypan) 以取得權限。</p>
                     </div>
                     <form @submit.prevent="verifyAdminPassword" class="space-y-4">
                         <div>
