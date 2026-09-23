@@ -787,18 +787,18 @@
                 <div class="mt-6 pt-6 border-t border-slate-800 space-y-3">
                     <h3 class="text-sm font-bold text-slate-300 flex justify-between items-center">
                         <span><i class="fa-solid fa-users-gear mr-1.5 text-amber-400"></i> 20 桌連線狀態與解鎖管理 (點擊已鎖定桌號可強制解鎖)</span>
-                        <span class="text-xs text-slate-400 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-sm">{{ gameState.connectedTables.length }}</strong> / 20 桌</span>
+                        <span class="text-xs text-slate-400 font-normal">已鎖定桌數: <strong class="text-emerald-400 font-oswald text-sm">{{ connectedTablesCount }}</strong> / 20 桌</span>
                     </h3>
                     
                     <div class="grid grid-cols-4 sm:grid-cols-10 gap-2">
                         <div v-for="t in 20" :key="t" 
                              class="bg-slate-950 p-2 rounded-xl border text-center transition flex flex-col justify-between"
-                             :class="gameState.connectedTables.includes(t) ? 'border-emerald-500/80 bg-emerald-950/20' : 'border-slate-800'">
+                             :class="isTableOccupied(t) ? 'border-emerald-500/80 bg-emerald-950/20' : 'border-slate-800'">
                             <div class="font-oswald font-bold text-xs" :class="t <= 10 ? 'text-red-400' : 'text-blue-400'">
                                 #{{ t < 10 ? '0'+t : t }}
                             </div>
                             <div class="mt-1.5">
-                                <button v-if="gameState.connectedTables.includes(t)" 
+                                <button v-if="isTableOccupied(t)" 
                                         @click="unlockSpecificTable(t)"
                                         title="點擊此按鈕強制解鎖此桌，讓玩家重新選桌"
                                         class="w-full text-[10px] bg-emerald-900/80 hover:bg-red-900 text-emerald-300 hover:text-red-200 border border-emerald-600 hover:border-red-500 px-1 py-1 rounded font-bold transition flex items-center justify-center gap-1 shadow-sm">
@@ -845,8 +845,8 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <select v-model="selectedMobileTable" :disabled="isTableLocked" class="flex-1 bg-gray-800 border border-gray-700 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-mlbBlue disabled:opacity-60 disabled:cursor-not-allowed font-bold">
-                        <option v-for="t in 20" :key="t" :value="t" :disabled="!isTableLocked && gameState.connectedTables.includes(t)">
-                            #{{ t < 10 ? '0' + t : t }} 桌 ({{ t <= 10 ? '紅隊代表' : '藍隊代表' }}) {{ gameState.connectedTables.includes(t) && !isTableLocked ? ' - [已被佔用]' : '' }}
+                        <option v-for="t in 20" :key="t" :value="t" :disabled="!isTableLocked && isTableOccupied(t)">
+                            #{{ t < 10 ? '0' + t : t }} 桌 ({{ t <= 10 ? '紅隊代表' : '藍隊代表' }}) {{ isTableOccupied(t) && !isTableLocked ? ' - [已被佔用]' : '' }}
                         </option>
                     </select>
                     <button @click="lockTable()" :disabled="isTableLocked" 
@@ -1144,6 +1144,13 @@
     const db = firebase.database();
     const gameStateRef = db.ref('mlb_live_game_state');
 
+    // 生成手機端唯一 Device ID (存於 localStorage)
+    let deviceId = localStorage.getItem('mlb_device_id');
+    if (!deviceId) {
+        deviceId = 'dev_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+        localStorage.setItem('mlb_device_id', deviceId);
+    }
+
     // 預設標準卡片資訊
     const defaultRedCards = [
         { id: 'r1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
@@ -1284,6 +1291,7 @@
                 phase: 'LOBBY',
                 activeTeam: 'red',
                 scores: { red: 0, blue: 0 },
+                occupiedTables: {}, 
                 connectedTables: [], 
                 usedQuestionIds: [], 
                 currentQuestionIndex: 0,
@@ -1307,7 +1315,16 @@
             const systemMessage = ref('連線至 Firebase 雲端中...');
 
             const currentQuestion = computed(() => questions.value[gameState.currentQuestionIndex] || questions.value[0]);
-            const submittedTablesCount = computed(() => Object.keys(gameState.answers).length);
+            const submittedTablesCount = computed(() => Object.keys(gameState.answers || {}).length);
+
+            // 計算已連線鎖定桌數
+            const connectedTablesCount = computed(() => Object.keys(gameState.occupiedTables || {}).length);
+
+            // 判斷某桌號是否已被佔用
+            const isTableOccupied = (tableNum) => {
+                const tableKey = 'table_' + tableNum;
+                return !!(gameState.occupiedTables && gameState.occupiedTables[tableKey]);
+            };
 
             // 格式化顯示時間
             const displayTimerFormatted = computed(() => {
@@ -1325,10 +1342,11 @@
 
             // 計算實際局數
             const currentRoundNumber = computed(() => {
+                const used = gameState.usedQuestionIds || [];
                 if (gameState.phase === 'QUESTION' || gameState.phase === 'REVEAL') {
-                    return gameState.usedQuestionIds.length;
+                    return used.length;
                 }
-                return Math.min(gameState.usedQuestionIds.length + 1, questions.value.length);
+                return Math.min(used.length + 1, questions.value.length);
             });
 
             const activeTeamTables = computed(() => {
@@ -1337,8 +1355,8 @@
 
             const categoryRemaining = computed(() => {
                 const counts = { '歷史紀錄': 2, '現役球星': 3, '戰術規則': 2, '綜合時事': 3 };
-                if (!gameState.usedQuestionIds) return counts;
-                gameState.usedQuestionIds.forEach(id => {
+                const used = gameState.usedQuestionIds || [];
+                used.forEach(id => {
                     const q = questions.value.find(q => q.id === id);
                     if (q && counts[q.category] !== undefined && counts[q.category] > 0) {
                         counts[q.category]--;
@@ -1360,50 +1378,80 @@
                 mobileSelectedAnswer.value = null;
             });
 
+            // 監聽自己的桌號鎖定狀態：若主持人解鎖或遭釋放，自動解鎖手機 UI
+            watch(() => gameState.occupiedTables, (newOccupied) => {
+                if (isTableLocked.value) {
+                    const tableKey = 'table_' + selectedMobileTable.value;
+                    const occupant = newOccupied ? newOccupied[tableKey] : null;
+                    if (!occupant || occupant.deviceId !== deviceId) {
+                        isTableLocked.value = false;
+                        localStorage.removeItem('my_locked_table');
+                    }
+                }
+            }, { deep: true });
+
             const updateRoute = () => {
                 const hash = window.location.hash.replace('#', '');
                 currentRoute.value = hash;
+            };
+
+            // 全安全 Vue 3 響應式狀態同步助手 (防止 undefined/null 拋錯凍結 Vue)
+            const updateGameState = (newData) => {
+                if (!newData) return;
+                const defaults = {
+                    phase: 'LOBBY',
+                    activeTeam: 'red',
+                    scores: { red: 0, blue: 0 },
+                    occupiedTables: {},
+                    connectedTables: [],
+                    usedQuestionIds: [],
+                    currentQuestionIndex: 0,
+                    selectedCategory: null,
+                    isTieVote: false,
+                    isScored: false,
+                    showCardNotice: false,
+                    lastRevealResult: null,
+                    timer: 30,
+                    isTimerRunning: false,
+                    activeCards: { red: null, blue: null },
+                    categoryVotes: { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 },
+                    cardVotes: { none: 0 },
+                    tableCardVotes: {},
+                    tableVotes: {},
+                    answers: {},
+                    redCards: defaultRedCards,
+                    blueCards: defaultBlueCards
+                };
+
+                const merged = { ...defaults, ...newData };
+                if (!merged.scores) merged.scores = { red: 0, blue: 0 };
+                if (!merged.occupiedTables) merged.occupiedTables = {};
+                if (!merged.categoryVotes) merged.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
+                if (!merged.cardVotes) merged.cardVotes = { none: 0 };
+                if (!merged.activeCards) merged.activeCards = { red: null, blue: null };
+                if (!merged.answers) merged.answers = {};
+                if (!merged.tableVotes) merged.tableVotes = {};
+                if (!merged.tableCardVotes) merged.tableCardVotes = {};
+                if (!merged.usedQuestionIds) merged.usedQuestionIds = [];
+                if (!merged.redCards) merged.redCards = JSON.parse(JSON.stringify(defaultRedCards));
+                if (!merged.blueCards) merged.blueCards = JSON.parse(JSON.stringify(defaultBlueCards));
+
+                // 校正 connectedTables 陣列
+                merged.connectedTables = Object.keys(merged.occupiedTables).map(k => parseInt(k.replace('table_', ''))).filter(n => !isNaN(n));
+
+                delete merged.categoryVotes['綜合題'];
+
+                // 覆蓋寫入 reactivity 節點
+                for (const key in merged) {
+                    gameState[key] = merged[key];
+                }
             };
 
             const initFirebaseListener = () => {
                 gameStateRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        if (!data.connectedTables) data.connectedTables = [];
-                        if (!data.usedQuestionIds) data.usedQuestionIds = [];
-                        if (!data.answers) data.answers = {};
-                        if (!data.tableVotes) data.tableVotes = {};
-                        if (!data.tableCardVotes) data.tableCardVotes = {};
-                        if (!data.cardVotes) data.cardVotes = { none: 0 };
-                        if (!data.categoryVotes) data.categoryVotes = { '歷史紀錄': 0, '現役球星': 0, '戰術規則': 0, '綜合時事': 0 };
-                        if (!data.activeCards) data.activeCards = { red: null, blue: null };
-                        if (data.isScored === undefined) data.isScored = false;
-                        if (data.showCardNotice === undefined) data.showCardNotice = false;
-                        if (!data.lastRevealResult) data.lastRevealResult = null;
-
-                        if (data.categoryVotes) {
-                            delete data.categoryVotes['綜合題'];
-                        }
-
-                        if (data.redCards) {
-                            data.redCards.forEach(c => {
-                                const def = defaultRedCards.find(d => d.id === c.id);
-                                if (def) { c.name = def.name; c.desc = def.desc; }
-                            });
-                        }
-                        if (data.blueCards) {
-                            data.blueCards.forEach(c => {
-                                const def = defaultBlueCards.find(d => d.id === c.id);
-                                if (def) { c.name = def.name; c.desc = def.desc; }
-                            });
-                        }
-
-                        Object.assign(gameState, data);
-
-                        if (isTableLocked.value && !gameState.connectedTables.includes(selectedMobileTable.value)) {
-                            isTableLocked.value = false;
-                            localStorage.removeItem('my_locked_table');
-                        }
+                        updateGameState(data);
                     }
                 });
             };
@@ -1417,14 +1465,15 @@
                 window.open(`${window.location.pathname}#${route}`, '_blank');
             };
 
-            // 玩家選桌鎖定與防呆
-            const lockTable = () => {
+            // 玩家選桌原子事務（Transaction）鎖定防衝突與防搶桌
+            const lockTable = async () => {
                 const tableNum = selectedMobileTable.value;
+                const tableKey = 'table_' + tableNum;
                 const tableFormatted = `#${tableNum < 10 ? '0' + tableNum : tableNum}`;
                 const teamName = tableNum <= 10 ? '紅隊' : '藍隊';
 
-                if (gameState.connectedTables.includes(tableNum)) {
-                    alert(`錯誤！桌號 ${tableFormatted} 已被其他裝置登入鎖定。\n(若為誤觸，請通知工作人員為您解鎖)`);
+                if (isTableOccupied(tableNum) && (!gameState.occupiedTables[tableKey] || gameState.occupiedTables[tableKey].deviceId !== deviceId)) {
+                    alert(`錯誤！桌號 ${tableFormatted} 已被現場其他夥伴鎖定。\n(若為誤觸，請通知工作人員為您解鎖)`);
                     return;
                 }
 
@@ -1432,14 +1481,35 @@
                     return;
                 }
 
-                isTableLocked.value = true;
-                const newConnected = [...gameState.connectedTables, tableNum];
-                localStorage.setItem('my_locked_table', tableNum); 
-                
-                const updates = {};
-                updates['mlb_live_game_state/connectedTables'] = newConnected;
-                updates['mlb_live_game_state/systemMessage'] = `${tableFormatted} 桌已成功鎖定代表身份！`;
-                db.ref().update(updates);
+                const tableRef = db.ref('mlb_live_game_state/occupiedTables/' + tableKey);
+
+                try {
+                    const result = await tableRef.transaction((currentData) => {
+                        // 若為空，或已被本裝置鎖定，允許原子交易寫入
+                        if (currentData === null || (currentData && currentData.deviceId === deviceId)) {
+                            return {
+                                deviceId: deviceId,
+                                tableNum: tableNum,
+                                time: firebase.database.ServerValue.TIMESTAMP
+                            };
+                        } else {
+                            return; // 中斷 Transaction
+                        }
+                    });
+
+                    if (result.committed) {
+                        isTableLocked.value = true;
+                        localStorage.setItem('my_locked_table', tableNum);
+                        tableRef.onDisconnect().remove(); // 離線/關閉網頁自動釋放桌號
+                        db.ref('mlb_live_game_state/systemMessage').set(`${tableFormatted} 桌已成功鎖定代表身份！`);
+                    } else {
+                        isTableLocked.value = false;
+                        alert(`⚠️ 鎖定失敗！${tableFormatted} 桌剛剛已被現場其他夥伴搶先鎖定，請選擇其他桌號！`);
+                    }
+                } catch (err) {
+                    console.error("Lock Table Error:", err);
+                    alert("連線發生錯誤，請重新嘗試！");
+                }
             };
 
             const unlockSpecificTable = (tableNum) => {
@@ -1447,12 +1517,9 @@
                 if (!window.confirm(`【主持人解鎖確認】\n確定要幫 ${tableFormatted} 桌解鎖代表身份嗎？\n解鎖後該桌手機將自動解除鎖定，並可重新選擇桌號。`)) {
                     return;
                 }
-                const index = gameState.connectedTables.indexOf(tableNum);
-                if (index > -1) {
-                    gameState.connectedTables.splice(index, 1);
-                }
-                systemMessage.value = `主持人已解除 ${tableFormatted} 桌代表鎖定！`;
-                broadcastState();
+                const tableKey = 'table_' + tableNum;
+                db.ref('mlb_live_game_state/occupiedTables/' + tableKey).remove();
+                db.ref('mlb_live_game_state/systemMessage').set(`主持人已解除 ${tableFormatted} 桌代表鎖定！`);
             };
 
             // 控制切換階段
@@ -1545,8 +1612,8 @@
 
             const getActiveTeamAvailableCards = () => {
                 const team = gameState.activeTeam;
-                const cards = team === 'red' ? gameState.redCards : gameState.blueCards;
-                return cards.filter(c => !c.used || (gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === c.id));
+                const cards = (team === 'red' ? gameState.redCards : gameState.blueCards) || [];
+                return cards.filter(c => !c.used || (gameState.activeCards && gameState.activeCards[gameState.activeTeam] && gameState.activeCards[gameState.activeTeam].id === c.id));
             };
 
             const confirmCardVote = (triggerNotice = true) => {
@@ -1914,6 +1981,7 @@
             const resetEntireGame = () => {
                 gameState.phase = 'LOBBY';
                 gameState.scores = { red: 0, blue: 0 };
+                gameState.occupiedTables = {};
                 gameState.connectedTables = [];
                 gameState.usedQuestionIds = [];
                 gameState.currentQuestionIndex = 0;
@@ -1971,6 +2039,8 @@
                 systemMessage,
                 currentQuestion,
                 submittedTablesCount,
+                connectedTablesCount,
+                isTableOccupied,
                 activeTeamTables,
                 categoryRemaining,
                 currentRoundNumber,
