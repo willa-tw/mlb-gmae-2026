@@ -41,6 +41,7 @@
         }
     </script>
     <style>
+    button:disabled { opacity: .45; cursor: not-allowed; }
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background: radial-gradient(circle at 50% -10%, #132e4d 0%, #040d18 75%);
@@ -527,7 +528,7 @@
                                 <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                                     <span class="text-xs sm:text-sm text-slate-400 block mb-1 font-bold">本題得分變動</span>
                                     <span class="text-2xl sm:text-4xl font-oswald font-black text-amber-400">+{{ gameState.lastRevealResult.addedPoints }} 分</span>
-                                    <span v-if="gameState.lastRevealResult.enemyDeduction > 0" class="text-xs text-red-400 block font-bold mt-0.5">(敵隊 -3 分)</span>
+                                    <span v-if="gameState.lastRevealResult.enemyDeduction > 0" class="text-xs text-red-400 block font-bold mt-0.5">(敵隊 -{{ gameState.lastRevealResult.enemyDeduction }} 分)</span>
                                 </div>
                             </div>
                         </div>
@@ -632,19 +633,19 @@
                             <button @click="setPhase('LOBBY')" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-sm rounded-xl text-slate-100 border border-slate-700 font-extrabold transition shadow">
                                 1. 進入大廳
                             </button>
-                            <button @click="setPhase('CATEGORY_VOTE')" class="px-3.5 py-2.5 bg-amber-900/60 hover:bg-amber-800 text-sm rounded-xl text-amber-200 border border-amber-700 font-extrabold transition shadow">
+                            <button :disabled="!['LOBBY', 'REVEAL'].includes(gameState.phase) || gameState.usedQuestionIds.length >= 10 || (gameState.usedQuestionIds.length > 0 && !gameState.isScored)" @click="setPhase('CATEGORY_VOTE')" class="px-3.5 py-2.5 bg-amber-900/60 hover:bg-amber-800 text-sm rounded-xl text-amber-200 border border-amber-700 font-extrabold transition shadow">
                                 2. 類別投票
                             </button>
-                            <button @click="confirmCategory()" class="px-3.5 py-2.5 bg-purple-900/60 hover:bg-purple-800 text-sm rounded-xl text-purple-200 border border-purple-700 font-extrabold transition shadow">
+                            <button :disabled="gameState.phase !== 'CATEGORY_VOTE' || gameState.categorySettled" @click="confirmCategory()" class="px-3.5 py-2.5 bg-purple-900/60 hover:bg-purple-800 text-sm rounded-xl text-purple-200 border border-purple-700 font-extrabold transition shadow">
                                 3. 揭曉投票與卡片階段
                             </button>
-                            <button @click="startQuestionPhase()" class="px-3.5 py-2.5 bg-emerald-900/60 hover:bg-emerald-800 text-sm rounded-xl text-emerald-200 border border-emerald-700 font-extrabold transition shadow">
+                            <button :disabled="gameState.phase !== 'CARD_PLAY' || !gameState.categorySettled || !gameState.cardSettled" @click="startQuestionPhase()" class="px-3.5 py-2.5 bg-emerald-900/60 hover:bg-emerald-800 text-sm rounded-xl text-emerald-200 border border-emerald-700 font-extrabold transition shadow">
                                 4. 出題與倒數
                             </button>
-                            <button @click="revealAnswer()" class="px-3.5 py-2.5 bg-blue-900/60 hover:bg-blue-800 text-sm rounded-xl text-blue-200 border border-blue-700 font-extrabold transition shadow">
+                            <button :disabled="gameState.phase !== 'QUESTION' || gameState.isScored" @click="revealAnswer()" class="px-3.5 py-2.5 bg-blue-900/60 hover:bg-blue-800 text-sm rounded-xl text-blue-200 border border-blue-700 font-extrabold transition shadow">
                                 5. 揭曉正解
                             </button>
-                            <button @click="setPhase('GAME_OVER')" class="px-3.5 py-2.5 bg-red-900/60 hover:bg-red-800 text-sm rounded-xl text-red-200 border border-red-700 font-extrabold transition shadow">
+                            <button :disabled="gameState.usedQuestionIds.length !== 10 || !gameState.isScored" @click="setPhase('GAME_OVER')" class="px-3.5 py-2.5 bg-red-900/60 hover:bg-red-800 text-sm rounded-xl text-red-200 border border-red-700 font-extrabold transition shadow">
                                 6. 揭曉勝負
                             </button>
                         </div>
@@ -657,15 +658,15 @@
                                 <span><i class="fa-solid fa-play text-amber-400 mr-2"></i> 核心流程控制器</span>
                             </h3>
                             <div>
-                                <label class="text-sm text-slate-300 block mb-2 font-bold">當前攻擊隊伍 (Active Team)</label>
+                                <label class="text-sm text-slate-300 block mb-2 font-bold">{{ gameState.isScored ? '下一輪進攻方（手動選擇）' : '本輪進攻方（可手動切換）' }}</label>
                                 <div class="grid grid-cols-2 gap-2.5">
-                                    <button @click="setActiveTeam('red')" 
-                                            :class="gameState.activeTeam === 'red' ? 'bg-red-600 text-white font-bold ring-2 ring-red-400' : 'bg-slate-800 text-gray-400'"
+                                    <button :disabled="gameState.phase === 'GAME_OVER'" @click="setActiveTeam('red')" 
+                                            :class="selectedControlTeam === 'red' ? 'bg-red-600 text-white font-bold ring-2 ring-red-400' : 'bg-slate-800 text-gray-400'"
                                             class="py-2.5 text-sm rounded-xl transition font-extrabold">
                                         紅隊 (1~10桌)
                                     </button>
-                                    <button @click="setActiveTeam('blue')" 
-                                            :class="gameState.activeTeam === 'blue' ? 'bg-blue-600 text-white font-bold ring-2 ring-blue-400' : 'bg-slate-800 text-gray-400'"
+                                    <button :disabled="gameState.phase === 'GAME_OVER'" @click="setActiveTeam('blue')" 
+                                            :class="selectedControlTeam === 'blue' ? 'bg-blue-600 text-white font-bold ring-2 ring-blue-400' : 'bg-slate-800 text-gray-400'"
                                             class="py-2.5 text-sm rounded-xl transition font-extrabold">
                                         藍隊 (11~20桌)
                                     </button>
@@ -722,7 +723,7 @@
                                 </div>
                             </div>
 
-                            <button @click="confirmCardVote(true)" class="w-full py-2.5 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-sm rounded-xl font-extrabold transition flex items-center justify-center gap-2">
+                            <button :disabled="gameState.phase !== 'CARD_PLAY' || gameState.cardSettled" @click="confirmCardVote(true)" class="w-full py-2.5 bg-purple-900/70 hover:bg-purple-800 text-purple-200 border border-purple-600 text-sm rounded-xl font-extrabold transition flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-check-to-slot"></i> 結算卡片投票 (保護優先制)
                             </button>
 
@@ -732,7 +733,7 @@
                                     <div v-for="card in gameState.redCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs sm:text-sm">
                                         <span class="font-bold text-slate-200">{{ card.name.split(' ')[0] }}</span>
                                         <button @click="useCard('red', card, true)" 
-                                                :disabled="card.used && (!gameState.activeCards.red || gameState.activeCards.red.id !== card.id)"
+                                                :disabled="gameState.phase !== 'CARD_PLAY' || gameState.activeTeam !== 'red' || gameState.isTimerRunning || gameState.cardSettled || card.used"
                                                 :class="(gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-red-600 text-white')"
                                                 class="px-2.5 py-1 rounded text-xs font-bold">
                                             {{ (gameState.activeCards.red && gameState.activeCards.red.id === card.id) ? '生效中' : (card.used ? '已消耗' : '發動') }}
@@ -743,7 +744,7 @@
                                     <div v-for="card in gameState.blueCards" :key="card.id" class="flex items-center justify-between bg-slate-900 p-2 rounded-lg border border-slate-800 text-xs sm:text-sm">
                                         <span class="font-bold text-slate-200">{{ card.name.split(' ')[0] }}</span>
                                         <button @click="useCard('blue', card, true)" 
-                                                :disabled="card.used && (!gameState.activeCards.blue || gameState.activeCards.blue.id !== card.id)"
+                                                :disabled="gameState.phase !== 'CARD_PLAY' || gameState.activeTeam !== 'blue' || gameState.isTimerRunning || gameState.cardSettled || card.used"
                                                 :class="(gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? 'bg-amber-600 text-white font-bold' : (card.used ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white')"
                                                 class="px-2.5 py-1 rounded text-xs font-bold">
                                             {{ (gameState.activeCards.blue && gameState.activeCards.blue.id === card.id) ? '生效中' : (card.used ? '已消耗' : '發動') }}
@@ -753,7 +754,7 @@
                             </div>
 
                             <button @click="cancelCard(gameState.activeTeam)" 
-                                    :disabled="!gameState.activeCards[gameState.activeTeam]"
+                                    :disabled="gameState.phase !== 'CARD_PLAY' || gameState.isTimerRunning || !gameState.cardSettled || !gameState.activeCards[gameState.activeTeam]"
                                     :class="gameState.activeCards[gameState.activeTeam] ? 'bg-amber-900/60 hover:bg-amber-800 text-amber-200 border-amber-600' : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'"
                                     class="w-full py-2 text-xs sm:text-sm rounded-xl font-bold transition flex items-center justify-center gap-1.5 border">
                                 <i class="fa-solid fa-rotate-left"></i> 撤銷卡片 (復原選錯)
@@ -847,7 +848,42 @@
                         </div>
                     </div>
                 </div>
-            </fieldset>
+                            <div class="mt-6 p-5 bg-slate-900 border border-amber-700 rounded-2xl space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <h3 class="text-xl font-bold text-amber-300">逐輪紀錄與現場還原</h3>
+                        <button @click="exportGameLog()" class="px-4 py-2 bg-slate-700 rounded-xl text-white font-bold">下載完整紀錄 JSON</button>
+                    </div>
+                    <p class="text-sm text-slate-300">還原會撤回所選輪次及其後所有輪次；分數、卡片、題庫進度與後續手動調分一併回復。桌號鎖定保留。撤回的紀錄仍保存在還原操作紀錄與下載檔中。</p>
+                    <p v-if="roundRecords.length === 0" class="text-slate-400">尚無輪次紀錄；開始類別投票後會自動建立快照。</p>
+                    <details v-for="record in roundRecords" :key="record.id" class="bg-slate-950 border border-slate-700 rounded-xl p-4">
+                        <summary class="cursor-pointer font-bold text-white">第 {{ record.roundNumber }} 輪｜{{ record.team === 'red' ? '紅隊' : '藍隊' }}｜{{ record.status }}<span v-if="record.result" class="ml-2 text-emerald-300">答對 {{ record.result.correctCount }} 桌／+{{ record.result.addedPoints }} 分</span></summary>
+                        <div class="mt-4 space-y-3 text-sm text-slate-200">
+                            <div>類別：{{ record.category || '尚未揭曉' }}｜卡片：{{ record.cardName }}</div>
+                            <p class="whitespace-pre-line">{{ record.question }}</p>
+                            <p v-if="record.result">{{ record.result.statusText }}｜結算比分：紅 {{ record.scores.red }}：藍 {{ record.scores.blue }}</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="p-3 border border-slate-700 rounded-lg"><strong class="text-amber-300">逐桌類別投票</strong><div v-for="(choice, table) in record.tableVotes" :key="table" class="mt-1">{{ tableLabel(table) }}：{{ choice }}</div><span v-if="Object.keys(record.tableVotes).length === 0">尚無投票</span></div>
+                                <div class="p-3 border border-slate-700 rounded-lg"><strong class="text-purple-300">逐桌卡片投票</strong><div v-for="(choice, table) in record.tableCardVotes" :key="table" class="mt-1">{{ tableLabel(table) }}：{{ cardLabel(choice) }}</div><span v-if="Object.keys(record.tableCardVotes).length === 0">尚無投票</span></div>
+                                <div class="p-3 border border-slate-700 rounded-lg"><strong class="text-emerald-300">逐桌答案</strong><div v-for="(choice, table) in record.answers" :key="table" class="mt-1">{{ tableLabel(table) }}：{{ choice }}</div><span v-if="Object.keys(record.answers).length === 0">尚無答案</span></div>
+                            </div>
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button @click="restoreRound(record.id, 'before')" class="px-4 py-2 bg-red-950 border border-red-700 text-red-200 rounded-lg font-bold">還原至本輪開始前</button>
+                                <button @click="restoreRound(record.id, 'replay')" :disabled="!record.canReplay" class="px-4 py-2 bg-amber-950 border border-amber-700 text-amber-200 rounded-lg font-bold disabled:opacity-40">重答同一題（先暫停）</button>
+                            </div>
+                        </div>
+                    </details>
+                    <details v-if="auditRecords.length" class="p-4 border border-slate-700 rounded-xl">
+                        <summary class="cursor-pointer text-amber-300 font-bold">還原與人工調分操作紀錄（最近20筆）</summary>
+                        <div v-for="(entry, index) in auditRecords" :key="index" class="mt-3 border-t border-slate-700 pt-3 text-sm text-slate-200">
+                            {{ formatLogTime(entry.at) }}｜{{ entry.kind }}<span v-if="entry.roundNumber">｜第{{ entry.roundNumber }}輪起</span><span v-if="entry.team">｜{{ entry.team === 'red' ? '紅隊' : '藍隊' }} {{ entry.amount > 0 ? '+' : '' }}{{ entry.amount }}分</span>
+                            <details v-if="entry.archivedHistory && Object.keys(entry.archivedHistory).length" class="mt-2">
+                                <summary class="cursor-pointer text-slate-400">查看撤回的結算紀錄</summary>
+                                <div v-for="(old, id) in entry.archivedHistory" :key="id" class="mt-2">第{{ old.roundNumber }}輪｜{{ old.team === 'red' ? '紅隊' : '藍隊' }}｜答對{{ old.result.correctCount }}桌｜+{{ old.result.addedPoints }}分｜{{ old.result.statusText }}</div>
+                            </details>
+                        </div>
+                    </details>
+                </div>
+</fieldset>
         </section>
 
 
@@ -1177,7 +1213,7 @@
     const defaultRedCards = [
         { id: 'r1', name: '全壘打卡 (2X)', desc: '本題若答對得分乘以 2 倍', used: false },
         { id: 'r2', name: '滿貫全壘打 (Slam)', desc: '答對7桌(含)以上額外加20分，未達7桌本題得0分', used: false },
-        { id: 'r3', name: '盜壘成功 (Steal)', desc: '若答對5桌(含)以上，本隊加3分，敵隊扣3分（最低0分）', used: false }
+        { id: 'r3', name: '盜壘成功 (Steal)', desc: '若答對5桌(含)以上，偷取敵隊最多3分；本隊僅增加實際扣除的分數', used: false }
     ];
     const defaultBlueCards = defaultRedCards.map((c, i) => ({ ...c, id: 'b' + (i + 1) }));
     createApp({
@@ -1311,7 +1347,7 @@
             const now = () => Date.now() + clockOffset;
             const freshState = (sessionId = '') => ({
                 schemaVersion: 2, sessionId, controlRevision: 0, roundId: '',
-                phase: 'LOBBY', activeTeam: 'red', scores: { red: 0, blue: 0 },
+                phase: 'LOBBY', activeTeam: 'red', nextTeam: null, scores: { red: 0, blue: 0 },
                 occupiedTables: {}, connectedTables: [], usedQuestionIds: [],
                 currentQuestionIndex: 0, selectedCategory: null, isTieVote: false,
                 isScored: false, showCardNotice: false, lastRevealResult: null,
@@ -1320,13 +1356,13 @@
                 categoryVotes: Object.fromEntries(categories.map(c => [c, 0])),
                 cardVotes: { none: 0 }, tableCardVotes: {}, tableVotes: {}, answers: {},
                 redCards: clone(defaultRedCards), blueCards: clone(defaultBlueCards),
-                history: {}, adminLease: null, systemMessage: '等待主持人初始化遊戲。'
+                history: {}, roundLogs: {}, auditLog: {}, adminLease: null, systemMessage: '等待主持人初始化遊戲。'
             });
             const normalize = raw => {
                 const s = { ...freshState(), ...(raw || {}) };
                 s.scores = { red: 0, blue: 0, ...(s.scores || {}) };
                 s.activeCards = { red: null, blue: null, ...(s.activeCards || {}) };
-                for (const key of ['occupiedTables', 'tableVotes', 'tableCardVotes', 'answers', 'history']) s[key] ||= {};
+                for (const key of ['occupiedTables', 'tableVotes', 'tableCardVotes', 'answers', 'history', 'roundLogs', 'auditLog']) s[key] ||= {};
                 s.usedQuestionIds = Array.isArray(s.usedQuestionIds) ? s.usedQuestionIds : Object.values(s.usedQuestionIds || {});
                 s.redCards ||= clone(defaultRedCards);
                 s.blueCards ||= clone(defaultBlueCards);
@@ -1344,6 +1380,34 @@
             };
             const teamOf = table => table <= 10 ? 'red' : 'blue';
             const gameState = reactive(freshState());
+            const gameplayKeys = [
+                'roundId', 'phase', 'activeTeam', 'nextTeam', 'scores', 'usedQuestionIds', 'currentQuestionIndex',
+                'selectedCategory', 'isTieVote', 'isScored', 'showCardNotice', 'lastRevealResult',
+                'timer', 'isTimerRunning', 'deadline', 'categorySettled', 'cardSettled', 'activeCards',
+                'categoryVotes', 'cardVotes', 'tableVotes', 'tableCardVotes', 'answers', 'redCards', 'blueCards', 'systemMessage'
+            ];
+            const takeGameplay = s => clone(Object.fromEntries(gameplayKeys.map(key => [key, s[key]])));
+            const roundRecords = computed(() => Object.entries(gameState.roundLogs).map(([id, log]) => {
+                const settled = gameState.history[id];
+                const live = id === gameState.roundId;
+                const questionIndex = log.questionSnapshot?.currentQuestionIndex;
+                return {
+                    id, roundNumber: log.roundNumber, team: log.team,
+                    status: settled ? '已結算' : '進行中',
+                    question: questionIndex === undefined ? '尚未出題' : questions.value[questionIndex]?.question || '題目資料不存在',
+                    category: settled?.category || (live ? gameState.selectedCategory : log.questionSnapshot?.selectedCategory),
+                    cardName: settled?.card?.name || (live ? gameState.activeCards[log.team]?.name : log.questionSnapshot?.activeCards?.[log.team]?.name) || '不使用戰術卡',
+                    tableVotes: settled?.categoryVotes || (live ? gameState.tableVotes : log.questionSnapshot?.tableVotes) || {},
+                    tableCardVotes: settled?.cardVotes || (live ? gameState.tableCardVotes : log.questionSnapshot?.tableCardVotes) || {},
+                    answers: settled?.answers || (live ? gameState.answers : {}) || {},
+                    result: settled?.result || null, scores: settled?.scores || null,
+                    canReplay: !!log.questionSnapshot
+                };
+            }).sort((a, b) => a.roundNumber - b.roundNumber));
+            const auditRecords = computed(() => Object.values(gameState.auditLog).sort((a, b) => b.at - a.at));
+            const tableLabel = key => '#' + String(Number(key.replace('table_', ''))).padStart(2, '0');
+            const cardLabel = id => id === 'none' ? '不使用戰術卡' : [...gameState.redCards, ...gameState.blueCards].find(c => c.id === id)?.name || id;
+            const formatLogTime = timestamp => new Date(timestamp).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
             const effectiveTime = s => s.isTimerRunning && s.deadline ? Math.max(0, Math.ceil((s.deadline - now()) / 1000)) : Math.max(0, Number(s.timer) || 0);
             const effectiveTimer = computed(() => { localClock.value; return effectiveTime(gameState); });
             const ready = computed(() => isConnected.value && hasSnapshot.value && clockReady.value);
@@ -1485,7 +1549,8 @@
                     await adminWrite(s => {
                         requireCondition((s.phase === 'LOBBY' || s.phase === 'REVEAL') && (s.usedQuestionIds.length === 0 || s.isScored), '只能從大廳或已結算結果開始新一輪。');
                         requireCondition(s.usedQuestionIds.length < questions.value.length, '十題已完成，請揭曉勝負。');
-                        if (s.usedQuestionIds.length > 0 && s.isScored) s.activeTeam = s.activeTeam === 'red' ? 'blue' : 'red';
+                        const before = takeGameplay(s);
+                        s.activeTeam = s.nextTeam || s.activeTeam;
                         s.roundId = uid();
                         s.phase = 'CATEGORY_VOTE';
                         s.tableVotes = {}; s.tableCardVotes = {}; s.answers = {};
@@ -1494,18 +1559,56 @@
                         s.isTieVote = false; s.isScored = false; s.showCardNotice = false; s.lastRevealResult = null;
                         s.timer = 15; s.deadline = 0; s.isTimerRunning = false;
                         s.systemMessage = '類別投票準備完成，請主持人啟動倒數。';
+                        s.roundLogs[s.roundId] = { roundNumber: s.usedQuestionIds.length + 1, team: s.activeTeam, startedAt: now(), before };
                     });
                 } else if (phase === 'GAME_OVER') {
                     if (!confirm('確定公布最終勝負？')) return;
                     await adminWrite(s => { requireCondition(s.usedQuestionIds.length === 10 && s.isScored, '必須完成十題結算才能公布勝負。'); closeTimer(s); s.phase = 'GAME_OVER'; s.systemMessage = '比賽結束！'; });
                 }
             };
-            const setActiveTeam = team => adminWrite(s => {
-                requireCondition(['red', 'blue'].includes(team), '隊伍無效。');
-                requireCondition(s.phase === 'LOBBY' && s.usedQuestionIds.length === 0, '只能在第一輪開始前選擇先攻；之後系統自動輪流進攻。');
-                s.activeTeam = team;
-                s.systemMessage = `${team === 'red' ? '紅隊' : '藍隊'}先攻。`;
-            });
+            const selectedControlTeam = computed(() => gameState.nextTeam || gameState.activeTeam);
+            const setActiveTeam = async team => {
+                if (!['red', 'blue'].includes(team) || team === selectedControlTeam.value) return;
+                const duringRound = ['CATEGORY_VOTE', 'CARD_PLAY', 'QUESTION'].includes(gameState.phase);
+                const warning = duringRound
+                    ? '中途切換將撤回本輪尚未結算的進度：清空投票與答案、退還本輪卡片與題目，切換後回到類別投票並暫停倒數。已結算分數與桌號鎖定保留。確定？'
+                    : `確定手動選擇${team === 'red' ? '紅隊' : '藍隊'}進攻？已結算的本輪結果保持不變，所選隊伍將於下一輪生效。`;
+                if (!confirm(warning)) return;
+                await adminWrite(s => {
+                    requireCondition(s.phase !== 'GAME_OVER', '比賽已結束；如需繼續，請先使用還原功能。');
+                    s.nextTeam = team;
+                    if (['CATEGORY_VOTE', 'CARD_PLAY', 'QUESTION'].includes(s.phase)) {
+                        const oldId = s.roundId;
+                        const log = s.roundLogs[oldId];
+                        requireCondition(!!log && !s.isScored, '缺少本輪快照或本輪已結算，無法中途切換。');
+                        appendAudit(s, { kind: '中途手動切換進攻方', roundNumber: log.roundNumber, fromTeam: s.activeTeam, toTeam: team, abandonedGameplay: takeGameplay(s), archivedLogs: { [oldId]: clone(log) } });
+                        closeTimer(s);
+                        if (s.phase === 'QUESTION') {
+                            const q = questions.value[s.currentQuestionIndex];
+                            s.usedQuestionIds = s.usedQuestionIds.filter(id => id !== q.id);
+                        }
+                        for (const owner of ['red', 'blue']) {
+                            const active = s.activeCards[owner];
+                            if (active) {
+                                const card = cardsFor(s, owner).find(c => c.id === active.id);
+                                if (card) card.used = false;
+                            }
+                        }
+                        delete s.roundLogs[oldId];
+                        s.roundId = uid(); s.activeTeam = team; s.phase = 'CATEGORY_VOTE';
+                        s.answers = {}; s.tableVotes = {}; s.tableCardVotes = {};
+                        s.activeCards = { red: null, blue: null }; s.selectedCategory = null;
+                        s.categorySettled = false; s.cardSettled = false; s.isTieVote = false;
+                        s.isScored = false; s.lastRevealResult = null; s.showCardNotice = false;
+                        s.timer = 15; s.deadline = 0; s.isTimerRunning = false;
+                        s.roundLogs[s.roundId] = { roundNumber: log.roundNumber, team, startedAt: now(), before: clone(log.before), switchedFrom: oldId };
+                        s.systemMessage = `已手動切換為${team === 'red' ? '紅隊' : '藍隊'}進攻，本輪重新票選類別，請主持人啟動倒數。`;
+                    } else {
+                        if (s.usedQuestionIds.length === 0) s.activeTeam = team;
+                        s.systemMessage = `下一輪由${team === 'red' ? '紅隊' : '藍隊'}進攻（手動設定）。`;
+                    }
+                }, '已手動設定進攻方。');
+            };
             const confirmCategory = async () => {
                 if (gameState.isTimerRunning && effectiveTimer.value > 0 && !confirm('類別投票尚未結束，確定提前收票並結算？')) return;
                 const random = Math.random();
@@ -1545,7 +1648,10 @@
                     s.currentQuestionIndex = questions.value.findIndex(item => item.id === q.id);
                     s.usedQuestionIds.push(q.id);
                     s.answers = {}; s.phase = 'QUESTION'; s.isScored = false; s.lastRevealResult = null; s.showCardNotice = false;
-                    s.timer = questionSeconds(q); openTimer(s);
+                    s.timer = questionSeconds(q);
+                    requireCondition(!!s.roundLogs[s.roundId], '本輪缺少還原紀錄，請初始化新版遊戲。');
+                    s.roundLogs[s.roundId].questionSnapshot = takeGameplay(s);
+                    openTimer(s);
                     s.systemMessage = `第${s.usedQuestionIds.length}題開放，請進攻方作答。`;
                 });
             };
@@ -1647,7 +1753,7 @@
             };
             const adjustScore = async (team, amount) => {
                 if (!confirm(`確定調整${team === 'red' ? '紅隊' : '藍隊'} ${amount > 0 ? '+' : ''}${amount}分？`)) return;
-                await adminWrite(s => { requireCondition(['red', 'blue'].includes(team), '隊伍無效。'); s.scores[team] = Math.max(0, s.scores[team] + amount); s.systemMessage = '主持人已手動調整分數。'; });
+                await adminWrite(s => { requireCondition(['red', 'blue'].includes(team), '隊伍無效。'); const previous = s.scores[team]; s.scores[team] = Math.max(0, previous + amount); appendAudit(s, { kind: '手動調整分數', team, amount: s.scores[team] - previous, previousScores: { [team]: previous } }); s.systemMessage = '主持人已手動調整分數。'; });
             };
             const revealAnswer = async () => {
                 if (gameState.isTimerRunning && effectiveTimer.value > 0 && !confirm('答題尚未結束，確定提前收卷並結算？')) return;
@@ -1667,16 +1773,59 @@
                     else if (card?.id.endsWith('3')) {
                         if (correctCount >= 5) {
                             enemyDeduction = Math.min(3, s.scores[defending]);
-                            s.scores[defending] -= enemyDeduction; addedPoints += 3;
-                            statusText = `【盜壘成功】本隊+3分，敵隊-${enemyDeduction}分`; statusType = 'success';
+                            s.scores[defending] -= enemyDeduction; addedPoints += enemyDeduction;
+                            statusText = `【盜壘成功】本隊+${enemyDeduction}分，敵隊-${enemyDeduction}分`; statusType = 'success';
                         } else { statusText = '【盜壘失敗】未達5桌'; statusType = 'fail'; }
                     }
                     s.scores[attacking] += addedPoints; s.isScored = true; s.phase = 'REVEAL';
                     s.lastRevealResult = { correctCount, addedPoints, enemyDeduction, statusText, statusType };
-                    s.history[s.roundId] = { questionId: q.id, team: attacking, category: s.selectedCategory, categoryVotes: clone(s.tableVotes), cardVotes: clone(s.tableCardVotes), card: card || null, answers: clone(s.answers), result: clone(s.lastRevealResult), scores: clone(s.scores), settledAt: now() };
+                    s.history[s.roundId] = { roundNumber: s.usedQuestionIds.length, questionId: q.id, team: attacking, category: s.selectedCategory, categoryVotes: clone(s.tableVotes), cardVotes: clone(s.tableCardVotes), card: card || null, answers: clone(s.answers), result: clone(s.lastRevealResult), scores: clone(s.scores), settledAt: now() };
+                    if (s.roundLogs[s.roundId]) s.roundLogs[s.roundId].settledAt = now();
                     s.systemMessage = `正解${q.answer}，${correctCount}桌答對，進帳${addedPoints}分。`;
                     // Keep activeTeam until next round so result UI still shows the attacking side.
                 });
+            };
+            const appendAudit = (s, entry) => {
+                s.auditLog[uid()] = { ...entry, at: now() };
+                const keys = Object.keys(s.auditLog).sort((a, b) => s.auditLog[a].at - s.auditLog[b].at);
+                while (keys.length > 20) delete s.auditLog[keys.shift()];
+            };
+            const restoreRound = async (id, mode = 'before') => {
+                const record = gameState.roundLogs[id];
+                if (!record || !['before', 'replay'].includes(mode)) return;
+                const description = mode === 'replay' ? '保留這輪題目與卡片，清空答案後重答同題' : '回到這輪開始前，重新票選類別與卡片';
+                if (!confirm(`確定還原第${record.roundNumber}輪？\n${description}。\n本輪及後續輪次的分數、卡片與題庫進度都會撤回；還原點之後的手動加減分也會撤回。桌號鎖定保持不變，舊紀錄會留在還原操作紀錄中。`)) return;
+                await adminWrite(s => {
+                    const target = s.roundLogs[id];
+                    requireCondition(!!target, '該輪紀錄已更新或撤回，請重新確認。');
+                    const checkpoint = mode === 'replay' ? target.questionSnapshot : target.before;
+                    requireCondition(!!checkpoint, '此輪沒有對應的還原快照，無法還原。');
+                    const removedIds = Object.keys(s.roundLogs).filter(key => s.roundLogs[key].roundNumber >= target.roundNumber);
+                    const archivedLogs = Object.fromEntries(removedIds.map(key => [key, clone(s.roundLogs[key])]));
+                    const archivedHistory = Object.fromEntries(removedIds.filter(key => s.history[key]).map(key => [key, clone(s.history[key])]));
+                    appendAudit(s, { kind: mode === 'replay' ? '重答同題' : '還原至輪次開始前', roundNumber: target.roundNumber, previousScores: clone(s.scores), abandonedGameplay: takeGameplay(s), archivedLogs, archivedHistory });
+                    for (const key of removedIds) { delete s.roundLogs[key]; delete s.history[key]; }
+                    for (const key of gameplayKeys) s[key] = clone(checkpoint[key] === undefined ? freshState()[key] : checkpoint[key]);
+                    s.isTimerRunning = false; s.deadline = 0; s.showCardNotice = false;
+                    if (mode === 'replay') {
+                        const newId = uid();
+                        s.roundId = newId; s.phase = 'QUESTION'; s.answers = {}; s.isScored = false; s.lastRevealResult = null;
+                        s.timer = questionSeconds(questions.value[s.currentQuestionIndex]);
+                        s.roundLogs[newId] = { roundNumber: target.roundNumber, team: s.activeTeam, startedAt: now(), before: clone(target.before), questionSnapshot: takeGameplay(s), replayOf: id };
+                        s.systemMessage = `已還原第${target.roundNumber}輪同題，請主持人啟動倒數重新作答。`;
+                    } else {
+                        s.systemMessage = `已回到第${target.roundNumber}輪開始前，請按「類別投票」重新開始本輪。`;
+                    }
+                }, '還原完成，請確認分數與目前階段後繼續。');
+            };
+            const exportGameLog = () => {
+                if (!isAdminAuthenticated.value || currentRoute.value !== 'admin') return;
+                const payload = { format: 'MLB-live-game-log-v3', exportedAt: now(), sessionId: gameState.sessionId, gameplay: takeGameplay(gameState), history: clone(gameState.history), roundLogs: clone(gameState.roundLogs), auditLog: clone(gameState.auditLog) };
+                const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }));
+                const link = document.createElement('a');
+                link.href = url; link.download = 'MLB比賽紀錄_' + new Date(now()).toISOString().replace(/[:.]/g, '-') + '.json';
+                document.body.appendChild(link); link.click(); link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
             };
             const resetEntireGame = async () => {
                 if (!isAdminAuthenticated.value || currentRoute.value !== 'admin') return;
@@ -1788,7 +1937,8 @@
                 toggleTimer, resetTimer, useCard, cancelCard, submitMobileAnswer,
                 voteCategory, voteCard, simulateTableAnswers, adjustScore, revealAnswer,
                 resetEntireGame, broadcastState, ready, initialized, pending, canSubmit,
-                effectiveTimer, connectionMessage, feedback, ownsControl, claimAdmin
+                effectiveTimer, connectionMessage, feedback, ownsControl, claimAdmin,
+                selectedControlTeam, roundRecords, auditRecords, tableLabel, cardLabel, formatLogTime, restoreRound, exportGameLog
             };
         }
     }).mount('#app');
